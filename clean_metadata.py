@@ -12,7 +12,7 @@ from bids.grabbids import BIDSLayout
 
 def main(bids_dir):
     layout = BIDSLayout(bids_dir)
-    scans = layout.get(extensions='nii.gz')
+    scans = layout.get(extension='nii.gz')
 
     KEEP_KEYS = [
         'AnatomicalLandmarkCoordinates', 'AcquisitionDuration', 'CogAtlasID',
