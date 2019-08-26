@@ -15,6 +15,14 @@ import pandas as pd
 from dateutil.parser import parse
 
 def manage_dicom_dir(dicom_dir):
+    '''
+    Helper function to grab data from dicom header depending on the type of dicom
+    directory given
+
+    Parameters
+    ----------
+    dicom_dir: Directory containing dicoms for processing
+    '''
     if op.splitext(dicom_dir) in ('.gz', '.tar'):
         open_type = 'r'
         if '.gz' in dicom_dir:
@@ -30,6 +38,15 @@ def manage_dicom_dir(dicom_dir):
     return data
 
 def run(command, env={}):
+    '''
+    Helper function that runs a given command and allows for specification of
+    environment information
+
+    Parameters
+    ----------
+    command: command to be sent to system
+    env: parameters to be added to environment
+    '''
     merged_env = os.environ
     merged_env.update(env)
     process = subprocess.Popen(command, stdout=subprocess.PIPE,
@@ -49,6 +66,12 @@ def run(command, env={}):
 
 
 def get_parser():
+    '''
+    Sets up argument parser for scripts
+
+    Parameters
+    ----------
+    '''
     parser = argparse.ArgumentParser(description='BIDS conversion and '
                                                  'anonymization for the FIU '
                                                  'scanner.')
@@ -65,6 +88,17 @@ def get_parser():
 
 
 def main(argv=None):
+    '''
+    Function that executes when bidsify.py is called
+
+    Parameters inherited from argparser
+    ----------
+    dicom_dir: Directory cointaining dicom data to be processed
+    heuristics: Path to heuristics file
+    sub: Subject ID
+    ses: Session ID, if required
+    output_dir: Directory to output bidsified data
+    '''
     args = get_parser().parse_args(argv)
     heudiconv_input = args.dicom_dir.replace(args.sub, '{subject}')
     if args.ses:

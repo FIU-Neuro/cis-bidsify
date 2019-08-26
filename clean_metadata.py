@@ -7,10 +7,17 @@ from __future__ import print_function
 import sys
 import json
 
-from bids.grabbids import BIDSLayout
+from bids import BIDSLayout
 
 
 def main(bids_dir):
+    '''
+    Removes unnecessary metadata from scan sidecar jsons
+
+    Parameters
+    ----------
+    bids_dir: path to BIDS dataset
+    '''
     layout = BIDSLayout(bids_dir)
     scans = layout.get(extension='nii.gz')
 
@@ -48,10 +55,14 @@ def main(bids_dir):
         metadata = layout.get_metadata(scan.filename)
         metadata2 = {key: metadata[key] for key in KEEP_KEYS if key in
                      metadata.keys()}
+        global_keys = {}
+        if 'global' in metadata.keys():
+            if 'const' in metadata['global']:
+                global_keys = metadata['global']['const']
+
         for key in KEEP_KEYS:
-            if key not in metadata.keys() and 'global' in metadata.keys():
-                if key in metadata['global']['const'].keys():
-                    metadata2[key] = metadata['global']['const'][key]
+            if key not in metadata and key in global_keys:
+                metadata2[key] = global_keys[key]
 
         with open(json_file, 'w') as fo:
             json.dump(metadata2, fo, sort_keys=True, indent=4)

@@ -61,7 +61,7 @@ def complete_fmap_jsons(bids_dir, subs, ses, overwrite):
         if ses:
             fmap_jsons = layout.get(subject=sid, session=ses,
                                     datatype='fmap', extension='json',
-                                    dir=['AP', 'PA'], acq=['func', 'dwi'])
+                                    dir=['AP', 'PA'])
 
 
         if fmap_jsons:
@@ -112,9 +112,7 @@ def complete_fmap_jsons(bids_dir, subs, ses, overwrite):
             if overwrite or 'TotalReadoutTime' not in data.keys():
                 # This next bit taken shamelessly from fmriprep
                 acc = float(data.get('ParallelReductionFactorInPlane', 1.0))
-                pe_idx = {'i': 0,
-                          'j': 1,
-                          'k': 2}[data['PhaseEncodingDirection'][0]]
+                pe_idx = {'i': 0, 'j': 1, 'k': 2}[data['PhaseEncodingDirection'][0]]
                 npe = img.shape[pe_idx]
                 etl = npe // acc
                 ees = data.get('EffectiveEchoSpacing', None)
@@ -150,19 +148,16 @@ def complete_func_jsons(bids_dir, subs, ses, overwrite):
                                     task=task, extensions='nii.gz')
 
             for nifti in niftis:
-                nifti_fname = nifti.filename
-                img = nib.load(nifti_fname)
+                img = nib.load(nifti.path)
                 # get_nearest doesn't work with field maps atm
-                data = layout.get_metadata(nifti_fname)
-                json_fname = nifti_fname.replace('.nii.gz', '.json')
+                data = layout.get_metadata(nifti.path)
+                json_fname = nifti.path.replace('.nii.gz', '.json')
 
                 if overwrite or 'TotalReadoutTime' not in data.keys():
                     # This next bit taken shamelessly from fmriprep
                     acc = float(data.get('ParallelReductionFactorInPlane',
                                          1.0))
-                    pe_idx = {'i': 0,
-                              'j': 1,
-                              'k': 2}[data['PhaseEncodingDirection'][0]]
+                    pe_idx = {'i': 0, 'j': 1, 'k': 2}[data['PhaseEncodingDirection'][0]]
                     npe = img.shape[pe_idx]
                     etl = npe // acc
                     ees = data.get('EffectiveEchoSpacing', None)
@@ -194,26 +189,22 @@ def complete_dwi_jsons(bids_dir, subs, ses, overwrite):
     """
     layout = BIDSLayout(bids_dir)
     for sid in subs:
+        niftis = layout.get(subject=sid, modality='dwi',
+                            extensions='nii.gz')
         if ses:
             niftis = layout.get(subject=sid, session=ses, modality='dwi',
                                 extensions='nii.gz')
-        else:
-            niftis = layout.get(subject=sid, modality='dwi',
-                                extensions='nii.gz')
 
         for nifti in niftis:
-            nifti_fname = nifti.filename
-            img = nib.load(nifti_fname)
+            img = nib.load(nifti.path)
             # get_nearest doesn't work with field maps atm
-            data = layout.get_metadata(nifti_fname)
-            json_fname = nifti_fname.replace('.nii.gz', '.json')
+            data = layout.get_metadata(nifti.path)
+            json_fname = nifti.path.replace('.nii.gz', '.json')
 
             if overwrite or 'TotalReadoutTime' not in data.keys():
                 # This next bit taken shamelessly from fmriprep
                 acc = float(data.get('ParallelReductionFactorInPlane', 1.0))
-                pe_idx = {'i': 0,
-                          'j': 1,
-                          'k': 2}[data['PhaseEncodingDirection'][0]]
+                pe_idx = {'i': 0, 'j': 1, 'k': 2}[data['PhaseEncodingDirection'][0]]
                 npe = img.shape[pe_idx]
                 etl = npe // acc
                 ees = data.get('EffectiveEchoSpacing', None)
