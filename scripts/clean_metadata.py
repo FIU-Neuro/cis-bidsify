@@ -10,7 +10,7 @@ import json
 from bids import BIDSLayout
 
 
-def main(bids_dir):
+def main(bids_dir, sub, sess):
     '''
     Removes unnecessary metadata from scan sidecar jsons
 
@@ -19,7 +19,7 @@ def main(bids_dir):
     bids_dir: path to BIDS dataset
     '''
     layout = BIDSLayout(bids_dir)
-    scans = layout.get(extension='nii.gz')
+    scans = layout.get(extension='nii.gz', subject=sub, session=sess)
 
     KEEP_KEYS = [
         'AnatomicalLandmarkCoordinates', 'AcquisitionDuration', 'CogAtlasID',
@@ -70,4 +70,6 @@ def main(bids_dir):
 
 if __name__ == '__main__':
     folder = sys.argv[1]
-    main(folder)
+    sub = sys.argv[2]
+    sess = sys.argv[3]
+    main(folder, sub, sess)
