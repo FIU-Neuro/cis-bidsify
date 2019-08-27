@@ -100,13 +100,14 @@ def main(argv=None):
     output_dir: Directory to output bidsified data
     '''
     args = get_parser().parse_args(argv)
-    heudiconv_input = args.dicom_dir.replace(args.sub, '{subject}')
-    print(heudiconv_input)
+    heudiconv_input = args.dicom_dir
+    heudiconv_input = heudiconv_input.replace(args.sub, '{subject}')
+
     if args.ses:
-        heudiconv_input.replace(args.ses, '{session}')
+        heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
     if not args.dicom_dir.startswith('/scratch'):
         raise ValueError('Dicom files must be in scratch.')
-
+    print(heudiconv_input)
     if not op.isfile(args.heuristics):
         raise ValueError('Argument "heuristics" must be an existing file.')
 
