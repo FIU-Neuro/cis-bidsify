@@ -102,6 +102,7 @@ def main(argv=None):
     args = get_parser().parse_args(argv)
     heudiconv_input = args.dicom_dir
     heudiconv_input = heudiconv_input.replace(args.sub, '{subject}')
+    print(heudiconv_input)
 
     #if args.ses:
         #heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
