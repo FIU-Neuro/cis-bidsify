@@ -50,18 +50,13 @@ def complete_fmap_jsons(bids_dir, subs, ses, overwrite):
 
     for sid in subs:
         # Remove potential trailing slash with op.abspath
-        temp_sid = sid
-        if not sid.startswith('sub-'):
-            temp_sid = 'sub-{0}'.format(sid)
+        temp_sid = sid if sid.startswith('sub-') else 'sub-{0}'.format(sid)
 
         subj_dir = op.abspath(op.join(bids_dir, temp_sid))
-        fmap_jsons = layout.get(subject=sid,
-                                datatype='fmap', extension='json',
-                                dir=['AP', 'PA'], acq=['func', 'dwi'])
-        if ses:
-            fmap_jsons = layout.get(subject=sid, session=ses,
-                                    datatype='fmap', extension='json',
-                                    dir=['AP', 'PA'])
+        fmap_jsons = (layout.get(subject=sid, datatype='fmap',
+                                 extension='json', dir=['AP', 'PA'], acq=['func', 'dwi']) \
+                      if not ses else layout.get(subject=sid, session=ses, datatype='fmap',
+                                                 extension='json', dir=['AP', 'PA']))
 
 
         if fmap_jsons:
@@ -119,8 +114,7 @@ def complete_fmap_jsons(bids_dir, subs, ses, overwrite):
                 if ees is None:
                     raise Exception('Field "EffectiveEchoSpacing" not '
                                     'found in json')
-                trt = ees * (etl - 1)
-                data['TotalReadoutTime'] = trt
+                data['TotalReadoutTime'] = ees * (etl - 1)
                 with open(json_fname, 'w') as f_obj:
                     json.dump(data, f_obj, sort_keys=True, indent=4)
 
@@ -140,23 +134,20 @@ def complete_func_jsons(bids_dir, subs, ses, overwrite):
     for sid in subs:
         # Assign TaskName
         for task in layout.get_tasks():
-            if ses:
-                niftis = layout.get(subject=sid, session=ses, modality='func',
-                                    task=task, extensions='nii.gz')
-            else:
-                niftis = layout.get(subject=sid, modality='func',
-                                    task=task, extensions='nii.gz')
+
+            niftis = layout.get(subject=sid, modality='func',
+                                task=task, extensions='nii.gz') \
+                     if not ses else layout.get(subject=sid, session=ses, modality='func',
+                                                task=task, extensions='nii.gz')
 
             for nifti in niftis:
                 img = nib.load(nifti.path)
                 # get_nearest doesn't work with field maps atm
                 data = layout.get_metadata(nifti.path)
                 json_fname = nifti.path.replace('.nii.gz', '.json')
-
                 if overwrite or 'TotalReadoutTime' not in data.keys():
                     # This next bit taken shamelessly from fmriprep
-                    acc = float(data.get('ParallelReductionFactorInPlane',
-                                         1.0))
+                    acc = float(data.get('ParallelReductionFactorInPlane', 1.0))
                     pe_idx = {'i': 0, 'j': 1, 'k': 2}[data['PhaseEncodingDirection'][0]]
                     npe = img.shape[pe_idx]
                     etl = npe // acc
@@ -164,8 +155,7 @@ def complete_func_jsons(bids_dir, subs, ses, overwrite):
                     if ees is None:
                         raise Exception('Field "EffectiveEchoSpacing" not '
                                         'found in json')
-                    trt = ees * (etl - 1)
-                    data['TotalReadoutTime'] = trt
+                    data['TotalReadoutTime'] = ees * (etl - 1)
 
                 if overwrite or ('TaskName' not in data.keys()):
                     data['TaskName'] = task
@@ -190,10 +180,9 @@ def complete_dwi_jsons(bids_dir, subs, ses, overwrite):
     layout = BIDSLayout(bids_dir)
     for sid in subs:
         niftis = layout.get(subject=sid, modality='dwi',
-                            extensions='nii.gz')
-        if ses:
-            niftis = layout.get(subject=sid, session=ses, modality='dwi',
-                                extensions='nii.gz')
+                            extensions='nii.gz') \
+                 if not ses else layout.get(subject=sid, session=ses, modality='dwi',
+                                            extensions='nii.gz')
 
         for nifti in niftis:
             img = nib.load(nifti.path)
@@ -211,8 +200,7 @@ def complete_dwi_jsons(bids_dir, subs, ses, overwrite):
                 if ees is None:
                     raise Exception('Field "EffectiveEchoSpacing" not '
                                     'found in json')
-                trt = ees * (etl - 1)
-                data['TotalReadoutTime'] = trt
+                data['TotalReadoutTime'] = ees * (etl - 1)
                 with open(json_fname, 'w') as f_obj:
                     json.dump(data, f_obj, sort_keys=True, indent=4)
 
