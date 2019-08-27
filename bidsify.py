@@ -101,7 +101,7 @@ def main(argv=None):
     '''
     args = get_parser().parse_args(argv)
     heudiconv_input = args.dicom_dir.replace(args.sub, '{subject}')
-    print(args.dicom_dir)
+    print(type(args.dicom_dir))
     if args.ses:
         heudiconv_input.replace(args.ses, '{session}')
     if not args.dicom_dir.startswith('/scratch'):
