@@ -118,7 +118,7 @@ def main(argv=None):
     tmp_path = args.output_dir + '/tmp/' + args.sub + '/'
     if args.ses:
         tmp_path += args.ses
-    os.makedirs(tmp_path)
+    os.makedirs(tmp_path, exist_ok=True)
     run(cmd, env={'TMPDIR': tmp_path})
     shutil.rmtree(tmp_path)
     # Grab some info to add to the participants file
