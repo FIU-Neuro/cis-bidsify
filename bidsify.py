@@ -100,8 +100,7 @@ def main(argv=None):
     output_dir: Directory to output bidsified data
     '''
     args = get_parser().parse_args(argv)
-    heudiconv_input = args.dicom_dir
-    heudiconv_input = heudiconv_input.replace(args.sub, '{subject}')
+    heudiconv_input = args.dicom_dir.replace(args.sub, '{subject}')
     print(heudiconv_input)
 
     #if args.ses:
