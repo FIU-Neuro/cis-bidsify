@@ -101,6 +101,7 @@ def main(argv=None):
     '''
     args = get_parser().parse_args(argv)
     heudiconv_input = args.dicom_dir.replace(args.sub, '{subject}')
+    print(heudiconv_input)
     if args.ses:
         heudiconv_input.replace(args.ses, '{session}')
     if not args.dicom_dir.startswith('/scratch'):
@@ -111,10 +112,10 @@ def main(argv=None):
 
     # Compile and run command
     cmd = ('./scripts/bidsconvert.sh {0} {1} {2} {3} {4}'.format(heudiconv_input,
-                                                                args.heuristics,
-                                                                args.output_dir,
-                                                                args.sub,
-                                                                args.ses))
+                                                                 args.heuristics,
+                                                                 args.output_dir,
+                                                                 args.sub,
+                                                                 args.ses))
     tmp_path = args.output_dir + '/tmp/' + args.sub + '/'
     if args.ses:
         tmp_path += args.ses
