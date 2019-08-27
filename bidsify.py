@@ -110,7 +110,7 @@ def main(argv=None):
         raise ValueError('Argument "heuristics" must be an existing file.')
 
     # Compile and run command
-    cmd = ('/scripts/bidsconvert.sh {0} {1} {2} {3} {4}'.format(heudiconv_input,
+    cmd = ('./scripts/bidsconvert.sh {0} {1} {2} {3} {4}'.format(heudiconv_input,
                                                                 args.heuristics,
                                                                 args.output_dir,
                                                                 args.sub,
