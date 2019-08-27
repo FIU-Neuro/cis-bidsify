@@ -103,8 +103,8 @@ def main(argv=None):
     heudiconv_input = args.dicom_dir
     heudiconv_input = heudiconv_input.replace(args.sub, '{subject}')
 
-    if args.ses:
-        heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
+    #if args.ses:
+        #heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
     if not args.dicom_dir.startswith('/scratch'):
         raise ValueError('Dicom files must be in scratch.')
     print(heudiconv_input)
