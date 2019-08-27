@@ -116,12 +116,13 @@ def main(argv=None):
                                                                  args.output_dir,
                                                                  args.sub,
                                                                  args.ses))
-    tmp_path = args.output_dir + '/tmp/' + args.sub + '/'
+    tmp_path = args.output_dir + '/bidsignore/tmp/' + args.sub + '/'
     if args.ses:
         tmp_path += args.ses
     os.makedirs(tmp_path, exist_ok=True)
     run(cmd, env={'TMPDIR': tmp_path})
     shutil.rmtree(tmp_path)
+
     # Grab some info to add to the participants file
     participants_file = op.join(args.output_dir, '/participants.tsv')
     if op.isfile(participants_file):
