@@ -18,6 +18,7 @@ def main(bids_dir, sub, sess):
     ----------
     bids_dir: path to BIDS dataset
     '''
+    print(bids_dir)
     layout = BIDSLayout(bids_dir)
     scans = layout.get(extension='nii.gz', subject=sub, session=sess)
 
