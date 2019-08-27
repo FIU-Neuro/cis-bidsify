@@ -79,7 +79,7 @@ def get_parser():
                         help='Directory containing raw data.')
     parser.add_argument('--heuristics', required=True, dest='heuristics',
                         help='Path to the heuristics file.')
-    parser.add_argument('--sub', required=True, dest='sub',
+    parser.add_argument('--sub', required=True, dest='sub', type=str,
                         help='The label of the subject to analyze.')
     parser.add_argument('--ses', required=False, dest='ses',
                         help='Session number', default=None)
