@@ -39,11 +39,12 @@ if [ -d $out_dir/$minipath ]; then
   chmod -R 774 $out_dir/$minipath
 
   # Deface structural scans
-  imglist=$(ls $out_dir/$minipath/anat/*.nii.gz)
-  for tmpimg in $imglist; do
-    mri_deface $tmpimg /src/deface/talairach_mixed_with_skull.gca \
-      /src/deface/face.gca $tmpimg
-  done
+  if [ -d $out_dir/$minipath ]; then
+      imglist=$(ls $out_dir/$minipath/anat/*.nii.gz)
+      for tmpimg in $imglist; do
+          mri_deface $tmpimg /src/deface/talairach_mixed_with_skull.gca \
+          /src/deface/face.gca $tmpimg
+      done
   rm ./*.log
 
   # Add IntendedFor and TotalReadoutTime fields to jsons
