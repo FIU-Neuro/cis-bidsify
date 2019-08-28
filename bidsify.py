@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 From https://github.com/BIDS-Apps/example/blob/aa0d4808974d79c9fbe54d56d3b47bb2cf4e0a0d/run.py
 """
@@ -77,7 +77,7 @@ def get_parser():
                                                  'scanner.')
     parser.add_argument('-d', '--dicomdir', required=True, dest='dicom_dir',
                         help='Directory containing raw data.')
-    parser.add_argument('--heuristics', required=True, dest='heuristics',
+    parser.add_argument('-f', '--heuristics', required=True, dest='heuristics',
                         help='Path to the heuristics file.')
     parser.add_argument('--sub', required=True, dest='sub',
                         help='The label of the subject to analyze.')
@@ -104,14 +104,13 @@ def main(argv=None):
 
     if args.ses:
         heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
-    if not args.dicom_dir.startswith('/scratch'):
-        raise ValueError('Dicom files must be in scratch.')
-    print(heudiconv_input)
+    #if not args.dicom_dir.startswith('/scratch'):
+    #    raise ValueError('Dicom files must be in scratch.')
     if not op.isfile(args.heuristics):
         raise ValueError('Argument "heuristics" must be an existing file.')
 
     # Compile and run command
-    cmd = ('./scripts/bidsconvert.sh {0} {1} {2} {3} {4}'.format(heudiconv_input,
+    cmd = ('/scripts/bidsconvert.sh {0} {1} {2} {3} {4}'.format(heudiconv_input,
                                                                  args.heuristics,
                                                                  args.output_dir,
                                                                  args.sub,

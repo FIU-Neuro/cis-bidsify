@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Author: Taylor Salo, tsalo006@fiu.edu
 Edited: Michael Riedel, miriedel@fiu.edu; 4/18/2018
@@ -52,8 +53,8 @@ def main(bids_dir, sub, sess):
         'TaskName', 'TotalReadoutTime', 'Units', 'VolumeTiming']
 
     for scan in scans:
-        json_file = scan.filename.replace('.nii.gz', '.json')
-        metadata = layout.get_metadata(scan.filename)
+        json_file = scan.path.replace('.nii.gz', '.json')
+        metadata = layout.get_metadata(scan.path)
         metadata2 = {key: metadata[key] for key in KEEP_KEYS if key in
                      metadata.keys()}
         global_keys = {}

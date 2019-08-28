@@ -47,10 +47,10 @@ if [ -d $out_dir/$minipath ]; then
   rm ./*.log
 
   # Add IntendedFor and TotalReadoutTime fields to jsons
-  python ./scripts/complete_jsons.py -d $out_dir -s $sub -ss $sess --overwrite
+  python /scripts/complete_jsons.py -d $out_dir -s $sub -ss $sess --overwrite
 
   # Remove extraneous fields from jsons
-  python ./scripts/clean_metadata.py $out_dir $sub $sess
+  python /scripts/clean_metadata.py $out_dir $sub $sess
 
   # Validate dataset and, if it passes, copy files to outdir
   bids-validator $out_dir --ignoreWarnings > $out_dir/validator.txt

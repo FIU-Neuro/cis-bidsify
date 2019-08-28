@@ -11,7 +11,6 @@ import json
 import bisect
 import argparse
 import os.path as op
-
 import nibabel as nib
 from bids import BIDSLayout
 
@@ -23,7 +22,7 @@ def _files_to_dict(file_list):
     """
     out_dict = {}
     for file_ in file_list:
-        fname = file_.filename
+        fname = file_.path
         with open(fname, 'r') as f_obj:
             data = json.load(f_obj)
         acq_time = int(data['SeriesNumber'])
@@ -62,7 +61,7 @@ def complete_fmap_jsons(bids_dir, subs, ses, overwrite):
         if fmap_jsons:
             fmap_dict = _files_to_dict(fmap_jsons)
             dts = sorted(fmap_dict.keys())
-            intendedfor_dict = {fmap.filename: [] for fmap in fmap_jsons}
+            intendedfor_dict = {fmap.path: [] for fmap in fmap_jsons}
 
             # Get all scans with associated field maps
             dat_jsons = layout.get(subject=sid, datatype=['func', 'dwi'], extensions='json')
@@ -72,7 +71,7 @@ def complete_fmap_jsons(bids_dir, subs, ses, overwrite):
 
             dat_jsons = _files_to_dict(dat_jsons)
             for dat_file in dat_jsons:
-                fn, _ = op.splitext(dat_jsons[dat_file].filename)
+                fn, _ = op.splitext(dat_jsons[dat_file].path)
                 fn += data_suffix
                 fn = fn.split(subj_dir)[-1][1:]  # Get relative path
 
@@ -83,7 +82,7 @@ def complete_fmap_jsons(bids_dir, subs, ses, overwrite):
                 # first field map
                 if idx == -1:
                     idx = 0
-                fmap_file = fmap_dict[dts[idx]].filename
+                fmap_file = fmap_dict[dts[idx]].path
                 intendedfor_dict[fmap_file].append(fn)
 
             for fmap_file in intendedfor_dict.keys():
@@ -179,10 +178,10 @@ def complete_dwi_jsons(bids_dir, subs, ses, overwrite):
     """
     layout = BIDSLayout(bids_dir)
     for sid in subs:
-        niftis = layout.get(subject=sid, modality='dwi',
-                            extensions='nii.gz') \
-                 if not ses else layout.get(subject=sid, session=ses, modality='dwi',
-                                            extensions='nii.gz')
+        niftis = (layout.get(subject=sid, modality='dwi',
+                             extensions='nii.gz') \
+                  if not ses else layout.get(subject=sid, session=ses, modality='dwi',
+                                             extensions='nii.gz'))
 
         for nifti in niftis:
             img = nib.load(nifti.path)
