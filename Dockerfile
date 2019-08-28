@@ -62,7 +62,7 @@ ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
 #------------------------
-# Install dcm2niix v1.0.20180622
+# Install dcm2niix v1.0.20190410
 #------------------------
 WORKDIR /tmp
 RUN deps='cmake g++ gcc git make pigz zlib1g-dev' \
@@ -70,7 +70,7 @@ RUN deps='cmake g++ gcc git make pigz zlib1g-dev' \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && mkdir dcm2niix \
-    && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20190720 | tar xz -C dcm2niix --strip-components 1 \
+    && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20190410 | tar xz -C dcm2niix --strip-components 1 \
     && mkdir dcm2niix/build && cd dcm2niix/build \
     && cmake .. && make \
     && make install \
