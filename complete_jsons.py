@@ -44,58 +44,61 @@ def complete_fmap_jsons(bids_dir, subs, ses, overwrite):
     ses: string of session
     overwrite: bool
     """
-    layout = BIDSLayout(bids_dir)
+    layout = BIDSLayout(op.abspath(bids_dir))
     data_suffix = '.nii.gz'
-
+    print(layout)
     for sid in subs:
         # Remove potential trailing slash with op.abspath
         temp_sid = sid if sid.startswith('sub-') else 'sub-{0}'.format(sid)
+        for acquisition in ['func', 'dwi']:
+            for _dir in ['AP', 'PA']:
+                subj_dir = op.abspath(op.join(bids_dir, temp_sid))
+                fmap_jsons = (layout.get(subject=sid, session=ses, datatype='fmap',
+                                         extension='json', dir=_dir,
+                                         acq=acquisition)
+                              if ses else layout.get(subject=sid, datatype='fmap',
+                                                     extension='json', dir=_dir,
+                                                     acq=acquisition))
 
-        subj_dir = op.abspath(op.join(bids_dir, temp_sid))
-        fmap_jsons = (layout.get(subject=sid, datatype='fmap',
-                                 extension='json', dir=['AP', 'PA'], acq=['func', 'dwi']) \
-                      if not ses else layout.get(subject=sid, session=ses, datatype='fmap',
-                                                 extension='json', dir=['AP', 'PA']))
 
+                if fmap_jsons:
 
-        if fmap_jsons:
-            fmap_dict = _files_to_dict(fmap_jsons)
-            dts = sorted(fmap_dict.keys())
-            intendedfor_dict = {fmap.path: [] for fmap in fmap_jsons}
+                    fmap_dict = _files_to_dict(fmap_jsons)
 
-            # Get all scans with associated field maps
-            dat_jsons = layout.get(subject=sid, datatype=['func', 'dwi'], extensions='json')
-            if ses:
-                dat_jsons = layout.get(subject=sid, session=ses,
-                                       datatype=['func', 'dwi'], extensions='json')
+                    dts = sorted(fmap_dict.keys())
+                    intendedfor_dict = {fmap.path: [] for fmap in fmap_jsons}
+                    # Get all scans with associated field maps
+                    dat_jsons = layout.get(subject=sid, datatype=acquisition, extension='json')
+                    if ses:
+                        dat_jsons = layout.get(subject=sid, session=ses,
+                                               datatype=acquisition, extension='json')
 
-            dat_jsons = _files_to_dict(dat_jsons)
-            for dat_file in dat_jsons:
-                fn, _ = op.splitext(dat_jsons[dat_file].path)
-                fn += data_suffix
-                fn = fn.split(subj_dir)[-1][1:]  # Get relative path
+                    dat_jsons = _files_to_dict(dat_jsons)
+                    for dat_file in dat_jsons:
+                        fn, _ = op.splitext(dat_jsons[dat_file].filename)
+                        fn += data_suffix
+                        fn = fn.split(subj_dir)[-1]  # Get relative path
 
-                # Find most immediate field map before scan
-                idx = bisect.bisect_right(dts, dat_file) - 1
+                        # Find most immediate field map before scan
+                        idx = bisect.bisect_right(dts, dat_file) - 1
+                        print(idx)
+                        # if there is no field map *before* the scan, grab the
+                        # first field map
+                        if idx == -1:
+                            idx = 0
+                        fmap_file = fmap_dict[dts[idx]].path
+                        intendedfor_dict[fmap_file].append(fn)
+                    print(intendedfor_dict)
+                    for fmap_file in intendedfor_dict.keys():
+                        with open(fmap_file, 'r') as f_obj:
+                            data = json.load(f_obj)
 
-                # if there is no field map *before* the scan, grab the
-                # first field map
-                if idx == -1:
-                    idx = 0
-                fmap_file = fmap_dict[dts[idx]].path
-                intendedfor_dict[fmap_file].append(fn)
+                        if overwrite or ('IntendedFor' not in data.keys()):
+                            data['IntendedFor'] = intendedfor_dict[fmap_file]
+                            with open(fmap_file, 'w') as f_obj:
+                                json.dump(data, f_obj, sort_keys=True, indent=4)
 
-            for fmap_file in intendedfor_dict.keys():
-                with open(fmap_file, 'r') as f_obj:
-                    data = json.load(f_obj)
-
-                if overwrite or ('IntendedFor' not in data.keys()):
-                    data['IntendedFor'] = intendedfor_dict[fmap_file]
-                    with open(fmap_file, 'w') as f_obj:
-                        json.dump(data, f_obj, sort_keys=True, indent=4)
-
-        niftis = layout.get(subject=sid, session=ses, modality='fmap',
-                            extension='nii.gz')
+        niftis = layout.get(subject=sid, session=ses, modality='fmap', extension='nii.gz')
         for nifti in niftis:
             img = nib.load(nifti.path)
 
@@ -135,9 +138,9 @@ def complete_func_jsons(bids_dir, subs, ses, overwrite):
         for task in layout.get_tasks():
 
             niftis = layout.get(subject=sid, modality='func',
-                                task=task, extensions='nii.gz') \
+                                task=task, extension='nii.gz') \
                      if not ses else layout.get(subject=sid, session=ses, modality='func',
-                                                task=task, extensions='nii.gz')
+                                                task=task, extension='nii.gz')
 
             for nifti in niftis:
                 img = nib.load(nifti.path)
@@ -179,9 +182,9 @@ def complete_dwi_jsons(bids_dir, subs, ses, overwrite):
     layout = BIDSLayout(bids_dir)
     for sid in subs:
         niftis = (layout.get(subject=sid, modality='dwi',
-                             extensions='nii.gz') \
+                             extension='nii.gz') \
                   if not ses else layout.get(subject=sid, session=ses, modality='dwi',
-                                             extensions='nii.gz'))
+                                             extension='nii.gz'))
 
         for nifti in niftis:
             img = nib.load(nifti.path)
@@ -208,6 +211,7 @@ def run(bids_dir, subs, ses, overwrite):
     """
     Complete field maps, functional scans, and DWI scans.
     """
+    print('Howdy Neighbor')
     complete_fmap_jsons(bids_dir, subs, ses, overwrite)
     complete_func_jsons(bids_dir, subs, ses, overwrite)
     complete_dwi_jsons(bids_dir, subs, ses, overwrite)

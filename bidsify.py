@@ -111,11 +111,15 @@ def main(argv=None):
 
     # Compile and run command
     cmd = ('/scripts/bidsconvert.sh {0} {1} {2} {3} {4}'.format(heudiconv_input,
-                                                                 args.heuristics,
-                                                                 args.output_dir,
-                                                                 args.sub,
-                                                                 args.ses))
-    tmp_path = args.output_dir + '/bidsignore/tmp/' + args.sub + '/'
+                                                                args.heuristics,
+                                                                args.output_dir,
+                                                                args.sub,
+                                                                args.ses))
+    tmp_path = args.output_dir + '/tmp/' + args.sub + '/'
+    if not os.path.isfile(args.output_dir + '/.bidsignore'):
+        with open(args.output_dir + '/.bidsignore', 'a') as fp:
+            fp.write('.heudiconv/\n')
+            fp.write('tmp/\n')
     if args.ses:
         tmp_path += args.ses
     os.makedirs(tmp_path, exist_ok=True)

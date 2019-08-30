@@ -39,20 +39,23 @@ if [ -d $out_dir/$minipath ]; then
   chmod -R 774 $out_dir/$minipath
 
   # Deface structural scans
-  if [ -d $out_dir/$minipath ]; then
-      imglist=$(ls $out_dir/$minipath/anat/*.nii.gz)
-      for tmpimg in $imglist; do
-          mri_deface $tmpimg /src/deface/talairach_mixed_with_skull.gca \
-          /src/deface/face.gca $tmpimg
-      done
-  rm ./*.log
+  if [ -d $out_dir/$minipath/anat/ ]; then
+    imglist=$(ls $out_dir/$minipath/anat/*.nii.gz)
+    for tmpimg in $imglist; do
+      mri_deface $tmpimg /src/deface/talairach_mixed_with_skull.gca \
+      /src/deface/face.gca $tmpimg
+    done
+  fi
+  #rm ./*.log
 
   # Add IntendedFor and TotalReadoutTime fields to jsons
+  echo "START JSON COMPLETION"
   python /scripts/complete_jsons.py -d $out_dir -s $sub -ss $sess --overwrite
-
+  echo "JSON COMPLETE"
   # Remove extraneous fields from jsons
+  echo "START CLEAN METADATA"
   python /scripts/clean_metadata.py $out_dir $sub $sess
-
+  echo "CLEAN COMPLETE"
   # Validate dataset and, if it passes, copy files to outdir
   bids-validator $out_dir --ignoreWarnings > $out_dir/validator.txt
 else
