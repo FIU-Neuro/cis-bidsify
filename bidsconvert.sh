@@ -54,7 +54,7 @@ if [ -d $out_dir/$minipath ]; then
   echo "JSON COMPLETE"
   # Remove extraneous fields from jsons
   echo "START CLEAN METADATA"
-  #python /scripts/clean_metadata.py $out_dir $sub $sess
+  python /scripts/clean_metadata.py $out_dir $sub $sess
   echo "CLEAN COMPLETE"
   # Validate dataset and, if it passes, copy files to outdir
   bids-validator $out_dir --ignoreWarnings > $out_dir/validator.txt

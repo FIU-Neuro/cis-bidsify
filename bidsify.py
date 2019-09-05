@@ -126,7 +126,11 @@ def main(argv=None):
         tmp_path += args.ses
     os.makedirs(tmp_path, exist_ok=True)
     run(cmd, env={'TMPDIR': tmp_path})
+    #Remove current subject working directory
     shutil.rmtree(tmp_path)
+    #TMP is empty, remove it, only useful if running multiple subjects
+    if not os.listdir(args.output_dir + '/tmp/'):
+        shutil.rmtree(args.output_dir + '/tmp/')
 
     # Grab some info to add to the participants file
     participants_file = op.join(args.output_dir, '/participants.tsv')
