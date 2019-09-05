@@ -46,11 +46,10 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
     for sid in subs:
         niftis = layout.get(subject=sid, session=ses, extension='nii.gz')
         for nifti in niftis:
-            nifti_path = nifti.path
-            img = nib.load(nifti_path)
+            img = nib.load(nifti.path)
             # get_nearest doesn't work with field maps atm
             data = nifti.get_metadata()
-            json_path = nifti_path.replace('.nii.gz', '.json')
+            json_path = nifti.path.replace('.nii.gz', '.json')
 
             if overwrite or 'TotalReadoutTime' not in data.keys():
                 # This next bit taken shamelessly from fmriprep
@@ -67,7 +66,7 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
                 dump = True
             if nifti.get_entities()['datatype'] == 'fmap' \
             and (overwrite or 'IntendedFor' not in data.keys()):
-                data['IntendedFor'] = intended_for_gen(niftis, nifti_path)
+                data['IntendedFor'] = intended_for_gen(niftis, nifti.path)
                 dump = True
             if dump is True:
                 with open(json_path, 'w') as f_obj:
