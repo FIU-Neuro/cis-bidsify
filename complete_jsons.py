@@ -66,7 +66,7 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
                 dump = True
             if nifti.get_entities()['datatype'] == 'fmap' \
             and (overwrite or 'IntendedFor' not in data.keys()):
-                data['IntendedFor'] = intended_for_gen(niftis, nifti.path)
+                data['IntendedFor'] = intended_for_gen(niftis, nifti)
                 dump = True
             if dump is True:
                 with open(json_path, 'w') as f_obj:
