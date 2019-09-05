@@ -120,6 +120,7 @@ def main(argv=None):
         with open(args.output_dir + '/.bidsignore', 'a') as fp:
             fp.write('.heudiconv/\n')
             fp.write('tmp/\n')
+            fp.write('validator.txt')
     if args.ses:
         tmp_path += args.ses
     os.makedirs(tmp_path, exist_ok=True)

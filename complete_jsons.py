@@ -13,7 +13,6 @@ import os.path as op
 import nibabel as nib
 from bids import BIDSLayout
 
-
 def intended_for_gen(niftis, fmap_nifti):
     out_dict = {x.get_metadata()['AcquisitionTime']: x.path for x in niftis}
     intended_for = []
@@ -24,8 +23,8 @@ def intended_for_gen(niftis, fmap_nifti):
         if target_entities['datatype'] == 'fmap':
             if all([fmap_entities[x] == target_entities[x] for x in fmap_entities]):
                 break
-        if target_entities['datatype'] == 'fmap':
-            continue
+            else:
+                continue
         intended_for.append(out_dict[num])
     return intended_for
 
@@ -50,7 +49,7 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
             nifti_path = nifti.path
             img = nib.load(nifti_path)
             # get_nearest doesn't work with field maps atm
-            data = nifti_path.get_metadata()
+            data = nifti.get_metadata()
             json_path = nifti_path.replace('.nii.gz', '.json')
 
             if overwrite or 'TotalReadoutTime' not in data.keys():
@@ -63,10 +62,10 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
                                     'found in json')
                 data['TotalReadoutTime'] = ees * (etl - 1)
                 dump = True
-            if nifti.path.get_entities()['task'] and (overwrite or 'TaskName' not in data.keys()):
-                data['TaskName'] = nifti.path.get_entities()['task']
+            if 'task' in nifti.get_entities() and (overwrite or 'TaskName' not in data.keys()):
+                data['TaskName'] = nifti.get_entities()['task']
                 dump = True
-            if nifti.path.get_entities()['datatype'] == 'fmap' \
+            if nifti.get_entities()['datatype'] == 'fmap' \
             and (overwrite or 'IntendedFor' not in data.keys()):
                 data['IntendedFor'] = intended_for_gen(niftis, nifti_path)
                 dump = True
