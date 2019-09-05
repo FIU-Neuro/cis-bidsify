@@ -14,18 +14,18 @@ import nibabel as nib
 from bids import BIDSLayout
 
 def intended_for_gen(niftis, fmap_nifti):
-    out_dict = {x.get_metadata()['AcquisitionTime']: x.path for x in niftis}
+    out_dict = {x.get_metadata()['AcquisitionTime']: x for x in niftis}
     intended_for = []
     acq_time = fmap_nifti.get_metadata()['AcquisitionTime']
     for num in sorted([x for x in sorted(out_dict.keys()) if x > acq_time]):
         fmap_entities = fmap_nifti.get_entities()
         target_entities = out_dict[num].get_entities()
         if target_entities['datatype'] == 'fmap':
-            if all([fmap_entities[x] == target_entities[x] for x in fmap_entities]):
+            if all([fmap_entities[x] == target_entities[x] for x in fmap_entities if x is not 'run']):
                 break
             else:
                 continue
-        intended_for.append(out_dict[num])
+        intended_for.append(out_dict[num].path)
     return intended_for
 
 def complete_jsons(bids_dir, subs, ses, overwrite):
