@@ -79,9 +79,9 @@ def get_parser():
                         help='Directory containing raw data.')
     parser.add_argument('-f', '--heuristics', required=True, dest='heuristics',
                         help='Path to the heuristics file.')
-    parser.add_argument('--sub', required=True, dest='sub',
+    parser.add_argument('-s', '--sub', required=True, dest='sub',
                         help='The label of the subject to analyze.')
-    parser.add_argument('--ses', required=False, dest='ses',
+    parser.add_argument('-ss', '--ses', required=False, dest='ses',
                         help='Session number', default=None)
     parser.add_argument('-o', '--output_dir', dest='output_dir', required=True)
     return parser
@@ -115,6 +115,7 @@ def main(argv=None):
                                                                 args.output_dir,
                                                                 args.sub,
                                                                 args.ses))
+    os.makedirs(args.output_dir, exist_ok=True)
     tmp_path = args.output_dir + '/tmp/' + args.sub + '/'
     if not os.path.isfile(args.output_dir + '/.bidsignore'):
         with open(args.output_dir + '/.bidsignore', 'a') as fp:
