@@ -21,7 +21,8 @@ def intended_for_gen(niftis, fmap_nifti):
         fmap_entities = fmap_nifti.get_entities()
         target_entities = out_dict[num].get_entities()
         if target_entities['datatype'] == 'fmap':
-            if all([fmap_entities[x] == target_entities[x] for x in fmap_entities if x is not 'run']):
+            if all([fmap_entities[x] == target_entities[x] for x in fmap_entities \
+                    if x != 'run']):
                 break
             else:
                 continue
