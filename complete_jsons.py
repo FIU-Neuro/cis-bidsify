@@ -52,6 +52,8 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
     for sid in subs:
         niftis = layout.get(subject=sid, session=ses, extension='nii.gz')
         for nifti in niftis:
+            if nifti.get_entities()['datatype'] == 'anat':
+                continue
             img = nib.load(nifti.path)
             # get_nearest doesn't work with field maps atm
             data = nifti.get_metadata()
