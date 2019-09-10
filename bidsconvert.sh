@@ -9,11 +9,12 @@
 ##########################
 # Get command line options
 ##########################
-dicom_dir=$1
-heuristics=$2
-out_dir=$3
-sub=$4
-sess=${5:-None}
+dir_type=$1
+dicom_dir=$2
+heuristics=$3
+out_dir=$4
+sub=$5
+sess=${6:-None}
 ######################################
 ######################################
 
@@ -22,12 +23,12 @@ sess=${5:-None}
 #############################################
 if [ "$sess" = "None" ]; then
   # Put data in BIDS format
-  heudiconv -d $dicom_dir -s $sub -f \
+  heudiconv $dir_type $dicom_dir -s $sub -f \
     $heuristics -c dcm2niix -o $out_dir --bids --overwrite
   minipath=sub-$sub
 else
   # Put data in BIDS format
-  heudiconv -d $dicom_dir -s $sub -ss $sess -f \
+  heudiconv $dir_type $dicom_dir -s $sub -ss $sess -f \
     $heuristics -c dcm2niix -o $out_dir --bids --overwrite
   minipath=sub-$sub/ses-$sess
 fi

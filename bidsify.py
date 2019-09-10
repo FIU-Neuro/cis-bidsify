@@ -48,21 +48,18 @@ def maintain_bids(output_dir, sub, ses):
     sub: Subject ID
     ses: Session ID, if required
     '''
-    if ses:
-        shutil.rmtree(output_dir / '.heudiconv' / sub / f'ses-{ses}')
-        shutil.rmtree(output_dir / 'tmp' / sub / ses)
-    if (output_dir / '.heudiconv' / sub).is_dir():
-        if not [x for x in (output_dir / '.heudiconv' / sub).iterdir()]:
-            shutil.rmtree((output_dir / '.heudiconv' / sub))
-    if (output_dir / 'tmp' / sub).is_dir():
-        if not [x for x in (output_dir / 'tmp' / sub).iterdir()]:
-            shutil.rmtree((output_dir / 'tmp' / sub))
-    if (output_dir / '.heudiconv').is_dir():
-        if not [x for x in (output_dir / '.heudiconv').iterdir()]:
-            shutil.rmtree((output_dir / '.heudiconv'))
-    if (output_dir / 'tmp').is_dir():
-        if not [x for x in (output_dir / 'tmp').iterdir()]:
-            shutil.rmtree((output_dir / 'tmp'))
+    for root in ['.heudiconv', 'tmp']:
+        if ses:
+            if root == '.heudiconv':
+                shutil.rmtree(output_dir / root / sub / f'ses-{ses}')
+            else:
+                shutil.rmtree(output_dir / root / sub / ses)
+        if (output_dir / root / sub).is_dir():
+            if not [x for x in (output_dir / root / sub).iterdir()]:
+                shutil.rmtree((output_dir / root / sub))
+        if (output_dir / root).is_dir():
+            if not [x for x in (output_dir / root).iterdir()]:
+                shutil.rmtree((output_dir / root))
 
 def run(command, env={}):
     '''
@@ -127,23 +124,30 @@ def main(argv=None):
     output_dir: Directory to output bidsified data
     '''
     args = get_parser().parse_args(argv)
-    heudiconv_input = args.dicom_dir.replace(args.sub, '{subject}')
+
     args.dicom_dir = pathlib.Path(args.dicom_dir)
     args.heuristics = pathlib.Path(args.heuristics)
     args.output_dir = pathlib.Path(args.output_dir)
-    if args.ses:
-        heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
+    if args.dicom_dir.is_file():
+        dir_type = '-d'
+        heudiconv_input = args.dicom_dir.name.replace(args.sub, '{subject}')
+        if args.ses:
+            heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
+    else:
+        dir_type = '--files'
+        heudiconv_input = args.dicom_dir.name
     #if not args.dicom_dir.startswith('/scratch'):
     #    raise ValueError('Dicom files must be in scratch.')
     if not args.heuristics.is_file():
         raise ValueError('Argument "heuristics" must be an existing file.')
 
     # Compile and run command
-    cmd = ('/scripts/bidsconvert.sh {0} {1} {2} {3} {4}'.format(heudiconv_input,
-                                                                args.heuristics,
-                                                                args.output_dir,
-                                                                args.sub,
-                                                                args.ses))
+    cmd = ('/scripts/bidsconvert.sh {0} {1} {2} {3} {4} {5}'.format(dir_type,
+                                                                    heudiconv_input,
+                                                                    args.heuristics,
+                                                                    args.output_dir,
+                                                                    args.sub,
+                                                                    args.ses))
     args.output_dir.mkdir(parents=True, exist_ok=True)
     tmp_path = args.output_dir / 'tmp' / args.sub
     if not (args.output_dir / '.bidsignore').is_file():
