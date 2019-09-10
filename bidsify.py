@@ -3,7 +3,6 @@
 From https://github.com/BIDS-Apps/example/blob/aa0d4808974d79c9fbe54d56d3b47bb2cf4e0a0d/run.py
 """
 import os
-import os.path as op
 import tarfile
 import pathlib
 import argparse
@@ -23,19 +22,47 @@ def manage_dicom_dir(dicom_dir):
     ----------
     dicom_dir: Directory containing dicoms for processing
     '''
-    if op.splitext(dicom_dir) in ('.gz', '.tar'):
+    if dicom_dir.suffix in ('.gz', '.tar'):
         open_type = 'r'
-        if '.gz' in dicom_dir:
+        if dicom_dir.suffix == '.gz':
             open_type = 'r:gz'
         with tarfile.open(dicom_dir, open_type) as tar:
             dicoms = [mem for mem in tar.getmembers() if
                       mem.name.endswith('.dcm')]
             f_obj = tar.extractfile(dicoms[0])
             data = pydicom.read_file(f_obj)
-    elif op.isdir(dicom_dir):
+    elif dicom_dir.is_dir():
         f_obj = [x for x in pathlib.Path(dicom_dir).glob('**/*.dcm')][0]
         data = pydicom.read_file(f_obj)
     return data
+
+def maintain_bids(output_dir, sub, ses):
+    '''
+    Function that cleans up working directories when called,
+    if all work is complete, will return directory to bids standard
+    (removing .heudiconv and tmp directories)
+
+    Parameters
+    ----------
+    output_dir: Path object of bids directory
+    sub: Subject ID
+    ses: Session ID, if required
+    '''
+    if ses:
+        shutil.rmtree(output_dir / '.heudiconv' / sub / f'ses-{ses}')
+        shutil.rmtree(output_dir / 'tmp' / sub / ses)
+    if (output_dir / '.heudiconv' / sub).is_dir():
+        if not [x for x in (output_dir / '.heudiconv' / sub).iterdir()]:
+            shutil.rmtree((output_dir / '.heudiconv' / sub))
+    if (output_dir / 'tmp' / sub).is_dir():
+        if not [x for x in (output_dir / 'tmp' / sub).iterdir()]:
+            shutil.rmtree((output_dir / 'tmp' / sub))
+    if (output_dir / '.heudiconv').is_dir():
+        if not [x for x in (output_dir / '.heudiconv').iterdir()]:
+            shutil.rmtree((output_dir / '.heudiconv'))
+    if (output_dir / 'tmp').is_dir():
+        if not [x for x in (output_dir / 'tmp').iterdir()]:
+            shutil.rmtree((output_dir / 'tmp'))
 
 def run(command, env={}):
     '''
@@ -101,12 +128,14 @@ def main(argv=None):
     '''
     args = get_parser().parse_args(argv)
     heudiconv_input = args.dicom_dir.replace(args.sub, '{subject}')
-
+    args.dicom_dir = pathlib.Path(args.dicom_dir)
+    args.heuristics = pathlib.Path(args.heuristics)
+    args.output_dir = pathlib.Path(args.output_dir)
     if args.ses:
         heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
     #if not args.dicom_dir.startswith('/scratch'):
     #    raise ValueError('Dicom files must be in scratch.')
-    if not op.isfile(args.heuristics):
+    if not args.heuristics.is_file():
         raise ValueError('Argument "heuristics" must be an existing file.')
 
     # Compile and run command
@@ -115,26 +144,23 @@ def main(argv=None):
                                                                 args.output_dir,
                                                                 args.sub,
                                                                 args.ses))
-    os.makedirs(args.output_dir, exist_ok=True)
-    tmp_path = args.output_dir + '/tmp/' + args.sub + '/'
-    if not os.path.isfile(args.output_dir + '/.bidsignore'):
-        with open(args.output_dir + '/.bidsignore', 'a') as fp:
-            fp.write('.heudiconv/\n')
-            fp.write('tmp/\n')
-            fp.write('validator.txt')
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    tmp_path = args.output_dir / 'tmp' / args.sub
+    if not (args.output_dir / '.bidsignore').is_file():
+        with (args.output_dir / '.bidsignore').open('a') as wk_file:
+            wk_file.write('.heudiconv/\n')
+            wk_file.write('tmp/\n')
+            wk_file.write('validator.txt\n')
     if args.ses:
-        tmp_path += args.ses
-    os.makedirs(tmp_path, exist_ok=True)
-    run(cmd, env={'TMPDIR': tmp_path})
-    #Remove current subject working directory
-    shutil.rmtree(tmp_path)
-    #TMP is empty, remove it, only useful if running multiple subjects
-    if not os.listdir(args.output_dir + '/tmp/'):
-        shutil.rmtree(args.output_dir + '/tmp/')
+        tmp_path = tmp_path / args.ses
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    run(cmd, env={'TMPDIR': tmp_path.name})
+    #Cleans up output directory, returning it to bids standard
+    maintain_bids(args.output_dir, args.sub, args.ses)
 
     # Grab some info to add to the participants file
-    participants_file = op.join(args.output_dir, '/participants.tsv')
-    if op.isfile(participants_file):
+    participants_file = args.output_dir / 'participants.tsv'
+    if participants_file.is_file():
         df = pd.read_csv(participants_file, sep='\t')
         data = manage_dicom_dir(args.dicom_dir)
         if data.get('PatientAge'):
@@ -150,7 +176,7 @@ def main(argv=None):
             age = np.nan
         df2 = pd.DataFrame(columns=['age', 'sex', 'weight'],
                            data=[[age, data.PatientSex, data.PatientWeight]])
-        df = pd.concat((df, df2), axis=1)
+        df = pd.concat([df, df2], axis=1)
         df.to_csv(participants_file, sep='\t', index=False)
 
 

@@ -19,12 +19,12 @@ def main(bids_dir, sub, sess):
     ----------
     bids_dir: path to BIDS dataset
     '''
-    print(bids_dir)
     layout = BIDSLayout(bids_dir)
     scans = layout.get(extension='nii.gz', subject=sub, session=sess)
 
     KEEP_KEYS = [
-        'AnatomicalLandmarkCoordinates', 'AcquisitionDuration', 'CogAtlasID',
+        'AnatomicalLandmarkCoordinates', 'AcquisitionTime',
+        'AcquisitionDuration', 'CogAtlasID',
         'CogPOID', 'CoilCombinationMethod', 'ConversionSoftware',
         'ConversionSoftwareVersion', 'DelayAfterTrigger', 'DelayTime',
         'DeviceSerialNumber', 'DwellTime', 'EchoNumbers', 'EchoTime',

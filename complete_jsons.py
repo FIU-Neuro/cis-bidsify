@@ -31,7 +31,6 @@ def intended_for_gen(niftis, fmap_nifti):
         intended_for.append(op.join('ses-{0}/'.format(target_entities['session']),
                                     target_entities['datatype'],
                                     out_dict[num].filename))
-    print(intended_for, 'Looks like we made it')
     return intended_for
 
 def complete_jsons(bids_dir, subs, ses, overwrite):
@@ -58,7 +57,6 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
             # get_nearest doesn't work with field maps atm
             data = nifti.get_metadata()
             json_path = nifti.path.replace('.nii.gz', '.json')
-            print(json_path)
             if overwrite or 'TotalReadoutTime' not in data.keys():
                 # This next bit taken shamelessly from fmriprep
                 pe_idx = {'i': 0, 'j': 1, 'k': 2}[data['PhaseEncodingDirection'][0]]
@@ -70,7 +68,6 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
                 data['TotalReadoutTime'] = ees * (etl - 1)
                 dump = 1
             if 'task' in nifti.get_entities() and (overwrite or 'TaskName' not in data.keys()):
-                print('Hello {0}'.format(nifti.filename))
                 data['TaskName'] = nifti.get_entities()['task']
                 dump = 1
             if nifti.get_entities()['datatype'] == 'fmap' \
@@ -78,7 +75,8 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
                 data['IntendedFor'] = intended_for_gen(niftis, nifti)
                 dump = 1
             if dump == 1:
-                print('yay')
+                data['AcquisitionTime'] = ('1800-01-01' + 'T' +
+                                           data['AcquisitionTime'].split('T')[-1])
                 with open(json_path, 'w') as f_obj:
                     json.dump(data, f_obj, sort_keys=True, indent=4)
 
