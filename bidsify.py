@@ -130,12 +130,12 @@ def main(argv=None):
     args.output_dir = pathlib.Path(args.output_dir)
     if args.dicom_dir.is_file():
         dir_type = '-d'
-        heudiconv_input = args.dicom_dir.name.replace(args.sub, '{subject}')
+        heudiconv_input = args.dicom_dir.absolute.replace(args.sub, '{subject}')
         if args.ses:
             heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
     else:
         dir_type = '--files'
-        heudiconv_input = args.dicom_dir.name
+        heudiconv_input = args.absolute.dicom_dir
     #if not args.dicom_dir.startswith('/scratch'):
     #    raise ValueError('Dicom files must be in scratch.')
     if not args.heuristics.is_file():
