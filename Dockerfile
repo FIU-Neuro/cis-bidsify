@@ -167,4 +167,6 @@ ENV SINGULARITY_TMPDIR /scratch
 # Set entrypoint script
 #----------------------
 COPY ./ /scripts/
+RUN chmod /scripts/*.sh
+RUN chmod /scripts/*.py
 ENTRYPOINT ["/neurodocker/startup.sh", "/scripts/bidsify.py"]
