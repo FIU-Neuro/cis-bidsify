@@ -26,7 +26,8 @@ def intended_for_gen(niftis, fmap_nifti):
                 break
             else:
                 continue
-        if fmap_entities['acquisition'] != target_entities['datatype']:
+        if 'acquisition' in fmap_entities \
+        and fmap_entities['acquisition'] != target_entities['datatype']:
             continue
         intended_for.append(op.join('ses-{0}/'.format(target_entities['session']),
                                     target_entities['datatype'],
