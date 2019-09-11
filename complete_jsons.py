@@ -14,24 +14,35 @@ import nibabel as nib
 from bids import BIDSLayout
 
 def intended_for_gen(niftis, fmap_nifti):
-    out_dict = {x.get_metadata()['AcquisitionTime']: x for x in niftis}
+
     intended_for = []
-    acq_time = fmap_nifti.get_metadata()['AcquisitionTime']
-    for num in sorted([x for x in sorted(out_dict.keys()) if x > acq_time]):
-        fmap_entities = fmap_nifti.get_entities()
-        target_entities = out_dict[num].get_entities()
+
+    fmap_entities = fmap_nifti.get_entities()
+    acq_time = fmap_entities['AcquisitionTime']
+    out_dict = {}
+    for nifti in niftis:
+        nifti_meta = nifti.get_metadata()
+        if nifti_meta['AcquisitionTime'] <= acq_time:
+            continue
+        if nifti_meta['AcquisitionTime'] in out_dict \
+        and nifti not in out_dict[nifti_meta['AcquisitionTime']]:
+            out_dict[nifti_meta['AcquisitionTime']].append(nifti)
+        elif nifti_meta['AcquisitionTime'] not in out_dict:
+            out_dict[nifti_meta['AcquisitionTime']] = [nifti]
+    print(fmap_nifti.get_metadata()['AcquisitionTime'], out_dict)
+    for num in sorted([x for x in out_dict]):
+        target_entities = out_dict[num][0].get_entities()
         if target_entities['datatype'] == 'fmap':
             if all([fmap_entities[x] == target_entities[x] for x in fmap_entities \
                     if x != 'run']):
                 break
             else:
                 continue
-        if 'acquisition' in fmap_entities \
-        and fmap_entities['acquisition'] != target_entities['datatype']:
+        if target_entities['datatype'] not in ['dwi', 'func']:
             continue
-        intended_for.append(op.join('ses-{0}/'.format(target_entities['session']),
-                                    target_entities['datatype'],
-                                    out_dict[num].filename))
+        intended_for.extend(sorted([op.join('ses-{0}'.format(target_entities['session']),
+                                            target_entities['datatype'],
+                                            out_dict[num][x]) for x in out_dict[num]]))
     return intended_for
 
 def complete_jsons(bids_dir, subs, ses, overwrite):
@@ -52,7 +63,6 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
     for sid in subs:
         niftis = layout.get(subject=sid, session=ses, extension='nii.gz')
         for nifti in niftis:
-            img = nib.load(nifti.path)
             # get_nearest doesn't work with field maps atm
             data = nifti.get_metadata()
             dump = 0
@@ -61,7 +71,8 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
             (overwrite or 'TotalReadoutTime' not in data.keys()):
                 # This next bit taken shamelessly from fmriprep
                 pe_idx = {'i': 0, 'j': 1, 'k': 2}[data['PhaseEncodingDirection'][0]]
-                etl = img.shape[pe_idx] // float(data.get('ParallelReductionFactorInPlane', 1.0))
+                etl = nib.load(nifti.path).shape[pe_idx] \
+                      // float(data.get('ParallelReductionFactorInPlane', 1.0))
                 ees = data.get('EffectiveEchoSpacing', None)
                 if ees is None:
                     raise Exception('Field "EffectiveEchoSpacing" not '
