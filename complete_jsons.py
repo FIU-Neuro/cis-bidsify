@@ -54,6 +54,7 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
             img = nib.load(nifti.path)
             # get_nearest doesn't work with field maps atm
             data = nifti.get_metadata()
+            dump = 0
             json_path = nifti.path.replace('.nii.gz', '.json')
             if 'EffectiveEchoSpacing' in data.keys() and \
             (overwrite or 'TotalReadoutTime' not in data.keys()):
