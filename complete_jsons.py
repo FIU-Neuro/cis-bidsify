@@ -51,13 +51,12 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
     for sid in subs:
         niftis = layout.get(subject=sid, session=ses, extension='nii.gz')
         for nifti in niftis:
-            if nifti.get_entities()['datatype'] == 'anat':
-                continue
             img = nib.load(nifti.path)
             # get_nearest doesn't work with field maps atm
             data = nifti.get_metadata()
             json_path = nifti.path.replace('.nii.gz', '.json')
-            if overwrite or 'TotalReadoutTime' not in data.keys():
+            if 'EffectiveEchoSpacing' in data.keys() and \
+            (overwrite or 'TotalReadoutTime' not in data.keys()):
                 # This next bit taken shamelessly from fmriprep
                 pe_idx = {'i': 0, 'j': 1, 'k': 2}[data['PhaseEncodingDirection'][0]]
                 etl = img.shape[pe_idx] // float(data.get('ParallelReductionFactorInPlane', 1.0))
