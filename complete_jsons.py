@@ -18,7 +18,7 @@ def intended_for_gen(niftis, fmap_nifti):
     intended_for = []
 
     fmap_entities = fmap_nifti.get_entities()
-    acq_time = fmap_entities['AcquisitionTime']
+    acq_time = fmap_nifti.get_metadata()['AcquisitionTime']
     out_dict = {}
     for nifti in niftis:
         nifti_meta = nifti.get_metadata()
