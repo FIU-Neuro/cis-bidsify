@@ -32,7 +32,7 @@ def manage_dicom_dir(dicom_dir):
             f_obj = tar.extractfile(dicoms[0])
             data = pydicom.read_file(f_obj)
     elif dicom_dir.is_dir():
-        f_obj = [x for x in pathlib.Path(dicom_dir).glob('**/*.dcm')][0].absolute()
+        f_obj = [x for x in pathlib.Path(dicom_dir).glob('**/*.dcm')][0].as_posix()
         data = pydicom.read_file(f_obj)
     return data
 
@@ -130,12 +130,12 @@ def main(argv=None):
     args.output_dir = pathlib.Path(args.output_dir)
     if args.dicom_dir.is_file():
         dir_type = '-d'
-        heudiconv_input = args.dicom_dir.absolute().replace(args.sub, '{subject}')
+        heudiconv_input = args.dicom_dir.as_posix().replace(args.sub, '{subject}')
         if args.ses:
             heudiconv_input = heudiconv_input.replace(args.ses, '{session}')
     else:
         dir_type = '--files'
-        heudiconv_input = args.dicom_dir.absolute()
+        heudiconv_input = args.dicom_dir.as_posix()
     #if not args.dicom_dir.startswith('/scratch'):
     #    raise ValueError('Dicom files must be in scratch.')
     if not args.heuristics.is_file():
