@@ -32,7 +32,7 @@ def manage_dicom_dir(dicom_dir):
             f_obj = tar.extractfile(dicoms[0])
             data = pydicom.read_file(f_obj)
     elif dicom_dir.is_dir():
-        f_obj = [x for x in pathlib.Path(dicom_dir).glob('**/*.dcm')][0]
+        f_obj = [x for x in pathlib.Path(dicom_dir).glob('**/*.dcm')][0].absolute()
         data = pydicom.read_file(f_obj)
     return data
 
