@@ -29,6 +29,9 @@ def intended_for_gen(niftis, fmap_nifti):
             out_dict[nifti_meta['AcquisitionTime']] = [nifti]
     for num in sorted([x for x in out_dict]):
         target_entities = [x.get_entities() for x in out_dict[num]]
+        if 'acquisition' in fmap_entities \
+        and any([fmap_entities['acquision'] != ent['datatype'] for ent in target_entities]):
+            continue
         if target_entities[0]['datatype'] == 'fmap':
             if any([all([fmap_entities[x] == i[x] for x in fmap_entities \
                     if x != 'run']) for i in target_entities]):
@@ -42,6 +45,7 @@ def intended_for_gen(niftis, fmap_nifti):
         else:
             intended_for.extend(sorted([op.join(target_entities[0]['datatype'],
                                                 x.filename) for x in out_dict[num]]))
+
     return sorted(intended_for)
 
 def complete_jsons(bids_dir, subs, ses, overwrite):
