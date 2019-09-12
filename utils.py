@@ -7,11 +7,15 @@ For example:
 -   Add PhaseEncodingDirection and TotalReadoutTime fields to field map jsons.
 -   Add TaskName to functional scan jsons.
 """
+import sys
 import json
-import argparse
+import pathlib
 import os.path as op
+import subprocess as sp
 import nibabel as nib
+
 from bids import BIDSLayout
+
 
 def intended_for_gen(niftis, fmap_nifti):
     intended_for = []
@@ -99,24 +103,79 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
                 with open(json_path, 'w') as f_obj:
                     json.dump(data, f_obj, sort_keys=True, indent=4)
 
-def main(args=None):
-    docstr = __doc__
-    parser = argparse.ArgumentParser(description=docstr)
-    parser.add_argument('-d', '--bids_dir', dest='bids_dir', required=True,
-                        type=str, help='location of BIDS dataset')
-    parser.add_argument('-s', '--subjects', dest='subs', required=True,
-                        type=str, nargs='+', help='list of subjects')
-    parser.add_argument('-ss', '--ses', dest='session', required=False,
-                        default=None,
-                        help='session for longitudinal studies, default is '
-                             'none')
-    parser.add_argument('-o', '--overwrite', dest='overwrite', required=False,
-                        default=False, action='store_true',
-                        help='overwrite fmap jsons')
-    args = parser.parse_args(args)
-    if isinstance(args.session, str) and args.session == 'None':
-        args.session = None
-    complete_jsons(args.bids_dir, args.subs, args.session, args.overwrite)
 
-if __name__ == '__main__':
-    main()
+def clean_jsons(bids_dir, sub, sess):
+    '''
+    Removes unnecessary metadata from scan sidecar jsons
+
+    Parameters
+    ----------
+    bids_dir: path to BIDS dataset
+    '''
+    layout = BIDSLayout(bids_dir)
+    scans = layout.get(extension='nii.gz', subject=sub, session=sess)
+
+    KEEP_KEYS = [
+        'AnatomicalLandmarkCoordinates', 'AcquisitionTime',
+        'AcquisitionDuration', 'CogAtlasID',
+        'CogPOID', 'CoilCombinationMethod', 'ConversionSoftware',
+        'ConversionSoftwareVersion', 'DelayAfterTrigger', 'DelayTime',
+        'DeviceSerialNumber', 'DwellTime', 'EchoNumbers', 'EchoTime',
+        'EchoTrainLength', 'EffectiveEchoSpacing', 'FlipAngle',
+        'GradientSetType', 'HighBit',
+        'ImagedNucleus', 'ImageType', 'ImagingFrequency',
+        'InPlanePhaseEncodingDirection', 'InstitutionName',
+        'InstitutionAddress', 'InstitutionalDepartmentName',
+        'Instructions', 'IntendedFor', 'InversionTime',
+        'MRAcquisitionType', 'MagneticFieldStrength', 'Manufacturer',
+        'ManufacturersModelName', 'MatrixCoilMode', 'Modality',
+        'MRTransmitCoilSequence', 'MultibandAccelerationFactor',
+        'NumberOfAverages', 'NumberOfPhaseEncodingSteps',
+        'NumberOfVolumesDiscardedByScanner', 'NumberOfVolumesDiscardedByUser',
+        'NumberShots', 'ParallelAcquisitionTechnique',
+        'ParallelReductionFactorInPlane', 'PartialFourier',
+        'PartialFourierDirection', 'PhaseEncodingDirection',
+        'PixelBandwidth', 'ProtocolName', 'PulseSequenceDetails',
+        'PulseSequenceType', 'ReceiveCoilActiveElements', 'ReceiveCoilName',
+        'RepetitionTime', 'Rows',
+        'SAR', 'ScanningSequence', 'ScanOptions', 'SequenceName',
+        'SequenceVariant', 'SeriesDescription', 'SeriesNumber',
+        'SliceEncodingDirection', 'SliceLocation',
+        'SliceThickness', 'SliceTiming', 'SoftwareVersions',
+        'SpacingBetweenSlices', 'StationName', 'TaskDescription',
+        'TaskName', 'TotalReadoutTime', 'Units', 'VolumeTiming']
+
+    for scan in scans:
+        json_file = scan.path.replace('.nii.gz', '.json')
+        metadata = layout.get_metadata(scan.path)
+        metadata2 = {key: metadata[key] for key in KEEP_KEYS if key in
+                     metadata.keys()}
+        global_keys = {}
+        if 'global' in metadata.keys():
+            if 'const' in metadata['global']:
+                global_keys = metadata['global']['const']
+
+        for key in KEEP_KEYS:
+            if key not in metadata and key in global_keys:
+                metadata2[key] = global_keys[key]
+
+        with open(json_file, 'w') as fo:
+            json.dump(metadata2, fo, sort_keys=True, indent=4)
+
+def run_heudiconv(dicom_dir, heuristics, out_dir, sub, ses):
+    if pathlib.Path(dicom_dir).is_file():
+        dir_type = '-d'
+    elif pathlib.Path(dicom_dir).is_dir():
+        dir_type = '--file'
+    if ses:
+        heudi_cmd = f'heudiconv {dir_type} {dicom_dir} \
+                      -s {sub} -ss {ses} -f {heuristics} \
+                     -c dcm2niix -o {out_dir} --bids --overwrite'
+    else:
+        heudi_cmd = f'heudiconv {dir_type} {dicom_dir} \
+                      -s {sub} -f {heuristics} \
+                      -c dcm2niix -o {out_dir} --bids --overwrite'
+    proc = sp.Popen(heudi_cmd, shell=True, stdout=sp.PIPE, stderr=sp.STDOUT)
+    for line in proc.stdout:
+        sys.stdout.write(line)
+    proc.wait()
