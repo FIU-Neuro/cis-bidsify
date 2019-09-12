@@ -14,9 +14,7 @@ import nibabel as nib
 from bids import BIDSLayout
 
 def intended_for_gen(niftis, fmap_nifti):
-
     intended_for = []
-
     fmap_entities = fmap_nifti.get_entities()
     acq_time = fmap_nifti.get_metadata()['AcquisitionTime']
     out_dict = {}
@@ -29,21 +27,22 @@ def intended_for_gen(niftis, fmap_nifti):
             out_dict[nifti_meta['AcquisitionTime']].append(nifti)
         elif nifti_meta['AcquisitionTime'] not in out_dict:
             out_dict[nifti_meta['AcquisitionTime']] = [nifti]
-    print(fmap_nifti.get_metadata()['AcquisitionTime'], out_dict)
     for num in sorted([x for x in out_dict]):
-        target_entities = out_dict[num][0].get_entities()
-        if target_entities['datatype'] == 'fmap':
-            if all([fmap_entities[x] == target_entities[x] for x in fmap_entities \
-                    if x != 'run']):
+        target_entities = [x.get_entities() for x in out_dict[num]]
+        if target_entities[0]['datatype'] == 'fmap':
+            if any([all([fmap_entities[x] == i[x] for x in fmap_entities \
+                    if x != 'run']) for i in target_entities]):
                 break
             else:
                 continue
-        if target_entities['datatype'] not in ['dwi', 'func']:
-            continue
-        intended_for.extend(sorted([op.join('ses-{0}'.format(target_entities['session']),
-                                            target_entities['datatype'],
-                                            out_dict[num][x]) for x in out_dict[num]]))
-    return intended_for
+        if 'session' in target_entities[0]:
+            intended_for.extend(sorted([op.join('ses-{0}'.format(target_entities[0]['session']),
+                                                target_entities[0]['datatype'],
+                                                x.filename) for x in out_dict[num]]))
+        else:
+            intended_for.extend(sorted([op.join(target_entities[0]['datatype'],
+                                                x.filename) for x in out_dict[num]]))
+    return sorted(intended_for)
 
 def complete_jsons(bids_dir, subs, ses, overwrite):
     """
@@ -59,9 +58,16 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
     ses: string of session
     overwrite: bool
     """
-    layout = BIDSLayout(op.abspath(bids_dir))
+    layout = BIDSLayout(op.abspath(bids_dir), validate=False)
     for sid in subs:
-        niftis = layout.get(subject=sid, session=ses, extension='nii.gz')
+        if ses:
+            niftis = layout.get(subject=sid, session=ses,
+                                extension='nii.gz',
+                                datatype=['func', 'fmap', 'dwi'])
+        else:
+            niftis = layout.get(subject=sid,
+                                extension='nii.gz',
+                                datatype=['func', 'fmap', 'dwi'])
         for nifti in niftis:
             # get_nearest doesn't work with field maps atm
             data = nifti.get_metadata()
@@ -87,8 +93,6 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
                 data['IntendedFor'] = intended_for_gen(niftis, nifti)
                 dump = 1
             if dump == 1:
-                data['AcquisitionTime'] = ('1800-01-01' + 'T' +
-                                           data['AcquisitionTime'].split('T')[-1])
                 with open(json_path, 'w') as f_obj:
                     json.dump(data, f_obj, sort_keys=True, indent=4)
 

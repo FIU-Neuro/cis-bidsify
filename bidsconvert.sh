@@ -24,12 +24,12 @@ sess=${6:-None}
 if [ "$sess" = "None" ]; then
   # Put data in BIDS format
   heudiconv $dir_type $dicom_dir -s $sub -f \
-    $heuristics -c dcm2niix -o $out_dir --bids --overwrite
+    $heuristics -c dcm2niix -o $out_dir --bids --overwrite --minmeta
   minipath=sub-$sub
 else
   # Put data in BIDS format
   heudiconv $dir_type $dicom_dir -s $sub -ss $sess -f \
-    $heuristics -c dcm2niix -o $out_dir --bids --overwrite
+    $heuristics -c dcm2niix -o $out_dir --bids --overwrite --minmeta
   minipath=sub-$sub/ses-$sess
 fi
 
