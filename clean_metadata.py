@@ -22,6 +22,7 @@ def main(bids_dir, sub, sess):
     layout = BIDSLayout(bids_dir)
     scans = layout.get(extension='nii.gz', subject=sub, session=sess)
 
+    """
     KEEP_KEYS = [
         'AnatomicalLandmarkCoordinates', 'AcquisitionTime',
         'AcquisitionDuration', 'CogAtlasID',
@@ -51,19 +52,18 @@ def main(bids_dir, sub, sess):
         'SliceThickness', 'SliceTiming', 'SoftwareVersions',
         'SpacingBetweenSlices', 'StationName', 'TaskDescription',
         'TaskName', 'TotalReadoutTime', 'Units', 'VolumeTiming']
-
+    """
     for scan in scans:
         json_file = scan.path.replace('.nii.gz', '.json')
         metadata = layout.get_metadata(scan.path)
-        metadata2 = {key: metadata[key] for key in KEEP_KEYS if key in
-                     metadata.keys()}
+        metadata2 = {key: metadata[key] for key in metadata.keys()}
         global_keys = {}
         if 'global' in metadata.keys():
             if 'const' in metadata['global']:
                 global_keys = metadata['global']['const']
 
-        for key in KEEP_KEYS:
-            if key not in metadata and key in global_keys:
+        for key in global_keys:
+            if key not in metadata:
                 metadata2[key] = global_keys[key]
 
         with open(json_file, 'w') as fo:

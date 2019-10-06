@@ -20,6 +20,7 @@ def intended_for_gen(niftis, fmap_nifti):
     given niftis
     - niftis : list of niftis that a for which a given fieldmap could be intended
     - fmap_nifti: the fieldmap nifti for which IntendedFor field needs to be created
+    """
     intended_for = []
     fmap_entities = fmap_nifti.get_entities()
     acq_time = fmap_nifti.get_metadata()['AcquisitionTime']
