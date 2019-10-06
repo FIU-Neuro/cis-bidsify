@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from dateutil.parser import parse
 
+
 def manage_dicom_dir(dicom_dir):
     '''
     Helper function to grab data from dicom header depending on the type of dicom
@@ -60,6 +61,7 @@ def maintain_bids(output_dir, sub, ses):
         if (output_dir / root).is_dir():
             if not [x for x in (output_dir / root).iterdir()]:
                 shutil.rmtree((output_dir / root))
+
 
 def run(command, env={}):
     '''
