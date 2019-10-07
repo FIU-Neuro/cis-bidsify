@@ -4,10 +4,8 @@ Author: Taylor Salo, tsalo006@fiu.edu
 Edited: Michael Riedel, miriedel@fiu.edu; 4/18/2018
 """
 from __future__ import print_function
-
 import sys
 import json
-
 from bids import BIDSLayout
 
 
