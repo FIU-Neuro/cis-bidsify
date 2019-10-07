@@ -29,6 +29,7 @@ def main(bids_dir, sub, sess):
         'CogPOID', 'CoilCombinationMethod', 'ConversionSoftware',
         'ConversionSoftwareVersion', 'DelayAfterTrigger', 'DelayTime',
         'DeviceSerialNumber', 'DwellTime', 'EchoNumbers', 'EchoTime',
+        'EchoTime1', 'EchoTime2',
         'EchoTrainLength', 'EffectiveEchoSpacing', 'FlipAngle',
         'GradientSetType', 'HighBit',
         'ImagedNucleus', 'ImageType', 'ImagingFrequency',
