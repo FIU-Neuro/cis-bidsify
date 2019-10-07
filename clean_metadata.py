@@ -56,7 +56,7 @@ def main(bids_dir, sub, sess):
     for scan in scans:
         json_file = scan.path.replace('.nii.gz', '.json')
         metadata = layout.get_metadata(scan.path)
-        metadata2 = {key: metadata[key] for key in metadata.keys()}
+        metadata2 = {key: metadata[key] for key in metadata.keys() if key != 'global'}
         global_keys = {}
         if 'global' in metadata.keys():
             if 'const' in metadata['global']:
