@@ -37,6 +37,7 @@ def manage_dicom_dir(dicom_dir):
         data = pydicom.read_file(f_obj)
     return data
 
+
 def maintain_bids(output_dir, sub, ses):
     '''
     Function that cleans up working directories when called,
