@@ -45,7 +45,7 @@ RUN apt-get update -qq \
 
 # nvm environment variables
 ENV NVM_DIR /usr/local/nvm
-ENV NODE_VERSION 8.0.0
+ENV NODE_VERSION 10.16.3
 
 # install nvm
 # https://github.com/creationix/nvm#install-script
@@ -62,7 +62,7 @@ ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
 #------------------------
-# Install dcm2niix v1.0.20171215
+# Install dcm2niix v1.0.20190410
 #------------------------
 WORKDIR /tmp
 RUN deps='cmake g++ gcc git make pigz zlib1g-dev' \
@@ -70,7 +70,7 @@ RUN deps='cmake g++ gcc git make pigz zlib1g-dev' \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && mkdir dcm2niix \
-    && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20171215 | tar xz -C dcm2niix --strip-components 1 \
+    && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20190410 | tar xz -C dcm2niix --strip-components 1 \
     && mkdir dcm2niix/build && cd dcm2niix/build \
     && cmake .. && make \
     && make install \
@@ -99,14 +99,15 @@ RUN conda create -y -q --name neuro python=3 \
     && sync && conda clean -tipsy && sync \
     && /bin/bash -c "source activate neuro \
       && pip install git+git://github.com/FIU-Neuro/dcmstack \
-      && pip install numpy pandas pybids nibabel heudiconv pydicom python-dateutil" \
+      && pip install numpy pandas pybids nibabel pydicom python-dateutil \
+      && pip install git+git://github.com/nipy/heudiconv@202f9434819318055e5293486f6bdac489989c52" \
     && sync \
     && sed -i '$isource activate neuro' $ND_ENTRYPOINT
 
 #---------------
 # BIDS-validator
 #---------------
-RUN npm install -g bids-validator@0.27.5
+RUN npm install -g bids-validator@1.3.0
 
 #--------------------------------------------------
 # Add NeuroDebian repository
@@ -166,4 +167,7 @@ ENV SINGULARITY_TMPDIR /scratch
 # Set entrypoint script
 #----------------------
 COPY ./ /scripts/
+USER root
+RUN chmod 755 -R /scripts/
+USER neuro
 ENTRYPOINT ["/neurodocker/startup.sh", "/scripts/bidsify.py"]
