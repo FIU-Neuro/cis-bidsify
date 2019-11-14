@@ -161,7 +161,7 @@ def main(argv=None):
     if args.ses:
         tmp_path = tmp_path / args.ses
     tmp_path.mkdir(parents=True, exist_ok=True)
-    run(cmd, env={'TMPDIR': tmp_path.name})
+    run(cmd, env={'TMPDIR': tmp_path.resolve()})
     #Cleans up output directory, returning it to bids standard
     maintain_bids(args.output_dir, args.sub, args.ses)
 
