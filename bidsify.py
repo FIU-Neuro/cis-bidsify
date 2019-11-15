@@ -3,15 +3,16 @@
 From https://github.com/BIDS-Apps/example/blob/aa0d4808974d79c9fbe54d56d3b47bb2cf4e0a0d/run.py
 """
 import os
+import sys
 import tarfile
 import pathlib
 import argparse
 import subprocess
 import shutil
-import pydicom
 import numpy as np
 import pandas as pd
 from dateutil.parser import parse
+import pydicom
 
 
 def manage_dicom_dir(dicom_dir):
@@ -37,7 +38,6 @@ def manage_dicom_dir(dicom_dir):
         data = pydicom.read_file(f_obj)
     return data
 
-
 def maintain_bids(output_dir, sub, ses):
     '''
     Function that cleans up working directories when called,
@@ -50,19 +50,22 @@ def maintain_bids(output_dir, sub, ses):
     sub: Subject ID
     ses: Session ID, if required
     '''
+    output_dir = pathlib.Path(output_dir)
     for root in ['.heudiconv', 'tmp']:
         if ses:
             if root == '.heudiconv':
+                print('Removing Temp Directory: ', output_dir / root / sub / f'ses-{ses}')
                 shutil.rmtree(output_dir / root / sub / f'ses-{ses}')
             else:
+                print('Removing Temp Directory: ', output_dir / root / sub / ses)
                 shutil.rmtree(output_dir / root / sub / ses)
         if (output_dir / root / sub).is_dir():
-            if not [x for x in (output_dir / root / sub).iterdir()]:
-                shutil.rmtree((output_dir / root / sub))
+            print('Removing Temp Directory: ', output_dir / root / sub)
+            shutil.rmtree(output_dir / root / sub)
         if (output_dir / root).is_dir():
             if not [x for x in (output_dir / root).iterdir()]:
+                print('Removing Temp Directory: ', output_dir / root)
                 shutil.rmtree((output_dir / root))
-
 
 def run(command, env={}):
     '''
@@ -81,10 +84,14 @@ def run(command, env={}):
                                env=merged_env)
     while True:
         line = process.stdout.readline()
-        line = str(line, 'utf-8')[:-1]
-        print(line)
+        line = line.decode('utf-8')
+        sys.stdout.write(line)
+        sys.stdout.flush()
         if line == '' and process.poll() is not None:
+            #print(process.returncode)
+            #process.returncode = 1
             break
+
 
     if process.returncode != 0:
         raise Exception("Non zero return code: {0}\n"
@@ -161,14 +168,14 @@ def main(argv=None):
     if args.ses:
         tmp_path = tmp_path / args.ses
     tmp_path.mkdir(parents=True, exist_ok=True)
-    run(cmd, env={'TMPDIR': tmp_path.name})
+    run(cmd, env={'TMPDIR': str(tmp_path.resolve())})
     #Cleans up output directory, returning it to bids standard
     maintain_bids(args.output_dir, args.sub, args.ses)
 
     # Grab some info to add to the participants file
     participants_file = args.output_dir / 'participants.tsv'
     if participants_file.is_file():
-        df = pd.read_csv(participants_file, sep='\t')
+        participant_df = pd.read_csv(participants_file, sep='\t')
         data = manage_dicom_dir(args.dicom_dir)
         if data.get('PatientAge'):
             age = data.PatientAge.replace('Y', '')
@@ -181,10 +188,11 @@ def main(argv=None):
             age = np.round(age.days / 365.25, 2)
         else:
             age = np.nan
-        df2 = pd.DataFrame(columns=['age', 'sex', 'weight'],
-                           data=[[age, data.PatientSex, data.PatientWeight]])
-        df = pd.concat([df, df2], axis=1)
-        df.to_csv(participants_file, sep='\t', index=False)
+        new_participant = pd.DataFrame(columns=['age', 'sex', 'weight'],
+                                       data=[[age, data.PatientSex,
+                                              data.PatientWeight]])
+        participant_df = pd.concat([participant_df, new_participant], axis=1)
+        participant_df.to_csv(participants_file, sep='\t', index=False)
 
 
 if __name__ == '__main__':
