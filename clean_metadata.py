@@ -9,14 +9,14 @@ import json
 from bids import BIDSLayout
 
 
-def main(bids_dir, sub, sess):
-    '''
+def clean_metadata(bids_dir, sub, sess):
+    """
     Removes unnecessary metadata from scan sidecar jsons
 
     Parameters
     ----------
     bids_dir: path to BIDS dataset
-    '''
+    """
     layout = BIDSLayout(bids_dir)
     scans = layout.get(extension='nii.gz', subject=sub, session=sess)
 
@@ -74,4 +74,4 @@ if __name__ == '__main__':
     folder = sys.argv[1]
     sub = sys.argv[2]
     sess = sys.argv[3]
-    main(folder, sub, sess)
+    clean_metadata(folder, sub, sess)

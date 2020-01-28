@@ -13,16 +13,20 @@ import numpy as np
 import pandas as pd
 from dateutil.parser import parse
 
+# Local imports
+from complete_jsons import complete_jsons
+from clean_metadata import clean_metadata
+
 
 def manage_dicom_dir(dicom_dir):
-    '''
+    """
     Helper function to grab data from dicom header depending on the type of dicom
     directory given
 
     Parameters
     ----------
     dicom_dir: Directory containing dicoms for processing
-    '''
+    """
     if dicom_dir.suffix in ('.gz', '.tar'):
         open_type = 'r'
         if dicom_dir.suffix == '.gz':
@@ -39,7 +43,7 @@ def manage_dicom_dir(dicom_dir):
 
 
 def maintain_bids(output_dir, sub, ses):
-    '''
+    """
     Function that cleans up working directories when called,
     if all work is complete, will return directory to bids standard
     (removing .heudiconv and tmp directories)
@@ -49,7 +53,7 @@ def maintain_bids(output_dir, sub, ses):
     output_dir: Path object of bids directory
     sub: Subject ID
     ses: Session ID, if required
-    '''
+    """
     for root in ['.heudiconv', 'tmp']:
         if ses:
             if root == '.heudiconv':
@@ -65,7 +69,7 @@ def maintain_bids(output_dir, sub, ses):
 
 
 def run(command, env={}):
-    '''
+    """
     Helper function that runs a given command and allows for specification of
     environment information
 
@@ -73,7 +77,7 @@ def run(command, env={}):
     ----------
     command: command to be sent to system
     env: parameters to be added to environment
-    '''
+    """
     merged_env = os.environ
     merged_env.update(env)
     process = subprocess.Popen(command, stdout=subprocess.PIPE,
@@ -93,12 +97,12 @@ def run(command, env={}):
 
 
 def get_parser():
-    '''
+    """
     Sets up argument parser for scripts
 
     Parameters
     ----------
-    '''
+    """
     parser = argparse.ArgumentParser(description='BIDS conversion and '
                                                  'anonymization for the FIU '
                                                  'scanner.')
@@ -115,7 +119,7 @@ def get_parser():
 
 
 def main(argv=None):
-    '''
+    """
     Function that executes when bidsify.py is called
 
     Parameters inherited from argparser
@@ -125,7 +129,7 @@ def main(argv=None):
     sub: Subject ID
     ses: Session ID, if required
     output_dir: Directory to output bidsified data
-    '''
+    """
     args = get_parser().parse_args(argv)
 
     args.dicom_dir = pathlib.Path(args.dicom_dir)
@@ -139,18 +143,15 @@ def main(argv=None):
     else:
         dir_type = '--files'
         heudiconv_input = args.dicom_dir.as_posix()
-    #if not args.dicom_dir.startswith('/scratch'):
-    #    raise ValueError('Dicom files must be in scratch.')
+
+    if args.ses:
+        sub_dir = 'sub-{}/ses-{}'.format(args.sub, args.ses)
+    else:
+        sub_dir = 'sub-{}'.format(args.sub)
+
     if not args.heuristics.is_file():
         raise ValueError('Argument "heuristics" must be an existing file.')
 
-    # Compile and run command
-    cmd = ('/scripts/bidsconvert.sh {0} {1} {2} {3} {4} {5}'.format(dir_type,
-                                                                    heudiconv_input,
-                                                                    args.heuristics,
-                                                                    args.output_dir,
-                                                                    args.sub,
-                                                                    args.ses))
     args.output_dir.mkdir(parents=True, exist_ok=True)
     tmp_path = args.output_dir / 'tmp' / args.sub
     if not (args.output_dir / '.bidsignore').is_file():
@@ -161,14 +162,41 @@ def main(argv=None):
     if args.ses:
         tmp_path = tmp_path / args.ses
     tmp_path.mkdir(parents=True, exist_ok=True)
+
+    # Run heudiconv
+    cmd = ('heudiconv {dir_type} {dicom_dir} -s {sub} -f '
+           '{heuristics} -c dcm2niix -o {out_dir} --bids --overwrite '
+           '--minmeta').format(dir_type=dir_type, dicom_dir=heudiconv_input,
+                               heuristics=args.heuristics, our_dir=args.output_dir)
     run(cmd, env={'TMPDIR': tmp_path.name})
-    #Cleans up output directory, returning it to bids standard
+
+    # Run defacer
+    anat_files = sorted(glob('{out_dir}/{sub_dir}/anat/*.nii.gz'))
+    for anat in anat_files:
+        cmd = ('mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca '
+               '/src/deface/face.gca {anat}').format(anat=anat)
+        run(cmd, env={'TMPDIR': tmp_path.name})
+
+    # Run json completer
+    complete_jsons(args.output_dir, args.sub, args.ses, overwrite=True)
+
+    # Run metadata cleaner
+    clean_metadata(args.output_dir, args.sub, args.ses)
+
+    # Run BIDS validator
+    cmd = ('bids-validator {out_dir} --ignoreWarnings > '
+           '{out_file}').format(
+                out_dir=args.output_dir,
+                out_file=op.join(args.output_dir, 'validator.txt'))
+    run(cmd, env={'TMPDIR': tmp_path.name})
+
+    # Clean up output directory, returning it to bids standard
     maintain_bids(args.output_dir, args.sub, args.ses)
 
     # Grab some info to add to the participants file
     participants_file = args.output_dir / 'participants.tsv'
     if participants_file.is_file():
-        df = pd.read_csv(participants_file, sep='\t')
+        df = pd.read_table(participants_file)
         data = manage_dicom_dir(args.dicom_dir)
         if data.get('PatientAge'):
             age = data.PatientAge.replace('Y', '')
@@ -184,7 +212,7 @@ def main(argv=None):
         df2 = pd.DataFrame(columns=['age', 'sex', 'weight'],
                            data=[[age, data.PatientSex, data.PatientWeight]])
         df = pd.concat([df, df2], axis=1)
-        df.to_csv(participants_file, sep='\t', index=False)
+        df.to_csv(participants_file, sep='\t', line_terminator='\n', index=False)
 
 
 if __name__ == '__main__':
