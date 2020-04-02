@@ -10,10 +10,9 @@ from dateutil.parser import parse
 
 import numpy as np
 import pandas as pd
+from bidsutils import complete_jsons, clean_metadata
 
 # Local imports
-from complete_jsons import complete_jsons
-from clean_metadata import clean_metadata
 from utils import run, manage_dicom_dir, maintain_bids
 
 
@@ -42,11 +41,17 @@ def bidsify_workflow(dicom_dir, heuristics, sub, ses=None, output_dir='.'):
 
     Parameters inherited from argparser
     ----------
-    dicom_dir: Directory cointaining dicom data to be processed
-    heuristics: Path to heuristics file
-    sub: Subject ID
-    ses: Session ID, if required
-    output_dir: Directory to output bidsified data
+    dicom_dir : str
+        Directory cointaining dicom data to be processed
+    heuristics : str
+        Path to heuristic file
+    sub : str
+        Subject ID
+    ses : str or None, optional
+        Session ID. Default is None.
+    output_dir : str, optional
+        Directory to output bidsified data. Default is '.' (current working
+        directory).
     """
     dicom_dir = pathlib.Path(dicom_dir)
     heuristics = pathlib.Path(heuristics)
@@ -109,7 +114,7 @@ def bidsify_workflow(dicom_dir, heuristics, sub, ses=None, output_dir='.'):
     # Clean up output directory, returning it to bids standard
     maintain_bids(output_dir, sub, ses)
 
-    # Grab some info to add to the participants file
+    # Grab some info from the dicoms to add to the participants file
     participants_file = output_dir / 'participants.tsv'
     if participants_file.is_file():
         participant_df = pd.read_table(participants_file)
