@@ -13,6 +13,7 @@ import os.path as op
 import nibabel as nib
 from bids import BIDSLayout
 
+
 def intended_for_gen(fmap_nifti, niftis):
     """
     For a given fieldmap niftis, finds niftis from a list that follow it in time,
@@ -61,6 +62,7 @@ def intended_for_gen(fmap_nifti, niftis):
 
     return sorted(intended_for)
 
+
 def complete_jsons(bids_dir, subs, ses, overwrite):
     """
     Assign 'IntendedFor' field to field maps in BIDS dataset.
@@ -75,8 +77,6 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
     ses: string of session
     overwrite: bool
     """
-
-
     layout = BIDSLayout(op.abspath(bids_dir), validate=False)
     for sid in subs:
         if ses:
@@ -115,6 +115,7 @@ def complete_jsons(bids_dir, subs, ses, overwrite):
                 with open(json_path, 'w') as f_obj:
                     json.dump(data, f_obj, sort_keys=True, indent=4)
 
+
 def main(args=None):
     docstr = __doc__
     parser = argparse.ArgumentParser(description=docstr)
@@ -133,6 +134,7 @@ def main(args=None):
     if isinstance(args.session, str) and args.session == 'None':
         args.session = None
     complete_jsons(args.bids_dir, args.subs, args.session, args.overwrite)
+
 
 if __name__ == '__main__':
     main()
