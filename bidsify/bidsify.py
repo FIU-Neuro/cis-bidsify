@@ -21,10 +21,9 @@ def _get_parser():
     Set up argument parser for scripts
     """
     parser = argparse.ArgumentParser(description='BIDS conversion and '
-                                                 'anonymization for the FIU '
-                                                 'scanner.')
+                                                 'anonymization.')
     parser.add_argument('-d', '--dicomdir', required=True, dest='dicom_dir',
-                        help='Directory containing raw data.')
+                        help='Directory or tar file containing raw data.')
     parser.add_argument('-f', '--heuristics', required=True, dest='heuristics',
                         help='Path to the heuristics file.')
     parser.add_argument('-s', '--sub', required=True, dest='sub',
@@ -37,12 +36,12 @@ def _get_parser():
 
 def bidsify_workflow(dicom_dir, heuristics, sub, ses=None, output_dir='.'):
     """
-    Entrypoint function
+    Run the BIDSification workflow.
 
-    Parameters inherited from argparser
+    Parameters
     ----------
     dicom_dir : str
-        Directory cointaining dicom data to be processed
+        Directory or tar file containing dicom data to be processed
     heuristics : str
         Path to heuristic file
     sub : str
