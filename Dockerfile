@@ -98,9 +98,7 @@ RUN conda create -y -q --name neuro python=3 \
                                     traits=4.6.0 \
     && sync && conda clean -tipsy && sync \
     && /bin/bash -c "source activate neuro \
-      && pip install git+git://github.com/FIU-Neuro/dcmstack \
-      && pip install numpy pandas pybids==0.9.4 nibabel pydicom python-dateutil \
-      && pip install git+git://github.com/nipy/heudiconv@202f9434819318055e5293486f6bdac489989c52" \
+      && pip install /scripts/ \
     && sync \
     && sed -i '$isource activate neuro' $ND_ENTRYPOINT
 
@@ -170,4 +168,4 @@ COPY ./ /scripts/
 USER root
 RUN chmod 755 -R /scripts/
 USER neuro
-ENTRYPOINT ["/neurodocker/startup.sh", "/scripts/bidsify.py"]
+ENTRYPOINT ["/neurodocker/startup.sh", "bidsify"]
