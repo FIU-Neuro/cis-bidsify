@@ -13,7 +13,7 @@ import pandas as pd
 from bidsutils import complete_jsons, clean_metadata
 
 # Local imports
-from utils import run, manage_dicom_dir, maintain_bids
+from bidsify.utils import run, manage_dicom_dir, maintain_bids
 
 
 def _get_parser():
@@ -22,15 +22,24 @@ def _get_parser():
     """
     parser = argparse.ArgumentParser(description='BIDS conversion and '
                                                  'anonymization.')
-    parser.add_argument('-d', '--dicomdir', required=True, dest='dicom_dir',
+    parser.add_argument('-d', '--dicomdir',
+                        required=True, dest='dicom_dir',
                         help='Directory or tar file containing raw data.')
-    parser.add_argument('-f', '--heuristics', required=True, dest='heuristics',
+    parser.add_argument('-f', '--heuristics',
+                        required=True, dest='heuristics',
+                        metavar='FILE',
                         help='Path to the heuristics file.')
-    parser.add_argument('-s', '--sub', required=True, dest='sub',
+    parser.add_argument('-s', '--sub',
+                        required=True, dest='sub',
                         help='The label of the subject to analyze.')
-    parser.add_argument('-ss', '--ses', required=False, dest='ses',
-                        help='Session number', default=None)
-    parser.add_argument('-o', '--output_dir', dest='output_dir', required=True)
+    parser.add_argument('-ss', '--ses',
+                        required=False, dest='ses',
+                        help='Session number',
+                        default=None)
+    parser.add_argument('-o', '--output_dir',
+                        dest='output_dir', required=True,
+                        metavar='PATH',
+                        help='Output directory')
     return parser
 
 

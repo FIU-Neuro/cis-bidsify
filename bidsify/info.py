@@ -37,10 +37,10 @@ REQUIRES = [
     'numpy',
     'scipy',
     'pandas',
-    'pybids==0.9.4',
+    'pybids>=0.9.4',
     'python-dateutil',
     'bidsutils',
-    'heudiconv==0.7.0',
+    'heudiconv>=0.7.0',
 ]
 
 TESTS_REQUIRES = [
@@ -70,8 +70,8 @@ EXTRA_REQUIRES['all'] = list(set([
     v for deps in EXTRA_REQUIRES.values() for v in deps]))
 
 ENTRY_POINTS = {'console_scripts': [
-    'bidsify=bidsify.bidsify:_main'
-]},
+    'bidsify = bidsify.bidsify:_main',
+]}
 
 # Package classifiers
 CLASSIFIERS = [
