@@ -2,10 +2,10 @@
 """
 From https://github.com/BIDS-Apps/example/blob/aa0d4808974d79c9fbe54d56d3b47bb2cf4e0a0d/run.py
 """
-import pathlib
 import argparse
 import os.path as op
 from glob import glob
+from pathlib import Path
 from dateutil.parser import parse
 
 import numpy as np
@@ -61,9 +61,9 @@ def bidsify_workflow(dicom_dir, heuristics, sub, ses=None, output_dir='.'):
         Directory to output bidsified data. Default is '.' (current working
         directory).
     """
-    dicom_dir = pathlib.Path(dicom_dir)
-    heuristics = pathlib.Path(heuristics)
-    output_dir = pathlib.Path(output_dir)
+    dicom_dir = Path(dicom_dir)
+    heuristics = Path(heuristics)
+    output_dir = Path(output_dir)
     if dicom_dir.is_file():
         dir_type = '-d'
         heudiconv_input = dicom_dir.as_posix().replace(sub, '{subject}')

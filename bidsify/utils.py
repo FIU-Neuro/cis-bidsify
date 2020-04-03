@@ -4,9 +4,9 @@ Utilities used by other modules in cis-bidsify.
 import os
 import sys
 import shutil
-import pathlib
 import tarfile
 import subprocess
+from pathlib import Path
 
 import pydicom
 
@@ -59,7 +59,7 @@ def manage_dicom_dir(dicom_dir):
             f_obj = tar.extractfile(dicoms[0])
             data = pydicom.read_file(f_obj)
     elif dicom_dir.is_dir():
-        f_obj = [x for x in pathlib.Path(dicom_dir).glob('**/*.dcm')][0].as_posix()
+        f_obj = [x for x in Path(dicom_dir).glob('**/*.dcm')][0].as_posix()
         data = pydicom.read_file(f_obj)
     return data
 
