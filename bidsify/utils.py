@@ -11,7 +11,7 @@ from pathlib import Path
 import pydicom
 
 
-def run(command, env={}):
+def run(command, env=None):
     """
     Helper function that runs a given command and allows for specification of
     environment information
@@ -22,7 +22,9 @@ def run(command, env={}):
     env: parameters to be added to environment
     """
     merged_env = os.environ
-    merged_env.update(env)
+    if env:
+        merged_env.update(env)
+
     process = subprocess.Popen(command, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, shell=True,
                                env=merged_env)
@@ -38,7 +40,7 @@ def run(command, env={}):
         raise Exception("Non zero return code: {0}\n"
                         "{1}\n\n{2}".format(process.returncode, command,
                                             process.stdout.read()))
-
+    return process.returncode
 
 def manage_dicom_dir(dicom_dir):
     """
@@ -49,7 +51,7 @@ def manage_dicom_dir(dicom_dir):
     ----------
     dicom_dir: Directory containing dicoms for processing
     """
-    if dicom_dir.suffix in ('.gz', '.tar'):
+    if dicom_dir.is_file() and dicom_dir.suffix in ('.gz', '.tar'):
         open_type = 'r'
         if dicom_dir.suffix == '.gz':
             open_type = 'r:gz'
@@ -59,7 +61,8 @@ def manage_dicom_dir(dicom_dir):
             f_obj = tar.extractfile(dicoms[0])
             data = pydicom.read_file(f_obj)
     elif dicom_dir.is_dir():
-        f_obj = [x for x in Path(dicom_dir).glob('**/*.dcm')][0].as_posix()
+        dcm_files = list(Path(dicom_dir).glob('**/*.dcm'))
+        f_obj = dcm_files[0].as_posix()
         data = pydicom.read_file(f_obj)
     return data
 
@@ -87,6 +90,6 @@ def maintain_bids(output_dir, sub, ses):
             print('Removing Temp Directory: ', output_dir / root / sub)
             shutil.rmtree(output_dir / root / sub)
         if (output_dir / root).is_dir():
-            if not [x for x in (output_dir / root).iterdir()]:
+            if not (output_dir / root).iterdir():
                 print('Removing Temp Directory: ', output_dir / root)
                 shutil.rmtree((output_dir / root))
