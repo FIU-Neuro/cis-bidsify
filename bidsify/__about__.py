@@ -11,7 +11,7 @@ del _version
 
 __copyright__ = ('Copyright 2020--now, FIU-Neuro developers')
 __credits__ = ['Taylor Salo', 'Adam Kimbler', 'Michael Riedel']
-__packagename__ = 'bidsify'
+__packagename__ = 'cis-bidsify'
 
 DOWNLOAD_URL = (
     'https://github.com/FIU-Neuro/{name}/archive/{ver}.tar.gz'.format(

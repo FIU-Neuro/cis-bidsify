@@ -23,8 +23,8 @@ def _get_parser():
                         required=True, dest='dicom_dir',
                         help='Directory or tar file containing raw data.')
     parser.add_argument('-f', '--heuristics', type=Path,
-                        required=True, dest='heuristics',
-                        metavar='FILE',
+                        dest='heuristics',
+                        metavar='PATH',
                         help='Path to the heuristics file.')
     parser.add_argument('-s', '--sub',
                         required=True, dest='subject',
@@ -58,8 +58,9 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
         Directory to output bidsified data. Default is '.' (current working
         directory).
     """
-    if not heuristics.is_file():
-        raise ValueError('Argument "heuristics" must be an existing file.')
+    if heuristics:
+        if not heuristics.is_file():
+            raise ValueError('Argument "heuristics" must be an existing file.')
 
     if dicom_dir.is_file() and str(dicom_dir).endswith('.gz') or str(dicom_dir.endswith('.tar')):
         dir_type = '-d'
@@ -87,9 +88,9 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
             wk_file.write('.heudiconv/\ntmp/\nvalidator.txt\n')
 
     # Run heudiconv
-    cmd = (f'heudiconv {dir_type} {dicom_dir} -s {subject} -f '
-           f'{heuristics} -c dcm2niix -o {output_dir} --bids --overwrite '
-           '--minmeta')
+    cmd = f'heudiconv {dir_type} {dicom_dir} \
+            -s {subject} -f {heuristics} -c dcm2niix \
+            -o {output_dir} --bids --overwrite --minmeta'
     #heudiconv_retval = run(cmd, env={'TMPDIR': tmp_path.name})
 
     # Run defacer
@@ -140,7 +141,7 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
                               line_terminator='\n', index=False)
 
 
-def main(argv=None):
+def _main(argv=None):
     '''
     Bidsify Runtime
     '''
