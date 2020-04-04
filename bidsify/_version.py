@@ -15,7 +15,7 @@ import os
 import re
 import subprocess
 import sys
-
+#pylint: disable-all
 
 def get_keywords():
     """Get the keywords needed to look up the version information."""

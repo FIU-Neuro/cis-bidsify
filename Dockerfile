@@ -17,9 +17,11 @@ ARG DEBIAN_FRONTEND=noninteractive
 # replace shell with bash so we can source files
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
+
 ENV LANG="en_US.UTF-8" \
     LC_ALL="C.UTF-8" \
     ND_ENTRYPOINT="/neurodocker/startup.sh"
+
 RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
     	apt-utils bzip2 ca-certificates curl locales unzip \
     && apt-get clean \
@@ -38,33 +40,15 @@ RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends git \
                                                      gcc \
                                                      pigz \
-                                                     wget \
                                                      curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# nvm environment variables
-ENV NVM_DIR /usr/local/nvm
-ENV NODE_VERSION 10.16.3
-
-# install nvm
-# https://github.com/creationix/nvm#install-script
-RUN curl --silent -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.2/install.sh | bash
-
-# install node and npm
-RUN source $NVM_DIR/nvm.sh \
-    && nvm install $NODE_VERSION \
-    && nvm alias default $NODE_VERSION \
-    && nvm use default
-
-# add node and npm to path so the commands are available
-ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
-ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+ENTRYPOINT ["/neurodocker/startup.sh"]
 
 #------------------------
 # Install dcm2niix v1.0.20190410
 #------------------------
-WORKDIR /tmp
 RUN deps='cmake g++ gcc git make pigz zlib1g-dev' \
     && apt-get update -qq && apt-get install -yq --no-install-recommends $deps \
     && apt-get clean \
@@ -75,37 +59,6 @@ RUN deps='cmake g++ gcc git make pigz zlib1g-dev' \
     && cmake .. && make \
     && make install \
     && rm -rf /tmp/*
-
-#------------------
-# Install Miniconda
-#------------------
-ENV CONDA_DIR=/opt/conda \
-    PATH=/opt/conda/bin:$PATH
-RUN echo "Downloading Miniconda installer ..." \
-    && miniconda_installer=/tmp/miniconda.sh \
-    && curl -sSL --retry 5 -o $miniconda_installer https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    && /bin/bash $miniconda_installer -b -p $CONDA_DIR \
-    && rm -f $miniconda_installer \
-    && conda config --system --prepend channels conda-forge \
-    && conda config --system --set auto_update_conda false \
-    && conda config --system --set show_channel_urls true \
-    && conda clean -tipsy && sync
-
-#-------------------------
-# Create conda environment
-#-------------------------
-RUN conda create -y -q --name neuro python=3 \
-                                    traits=4.6.0 \
-    && sync && conda clean -tipsy && sync \
-    && /bin/bash -c "source activate neuro \
-      && pip install /scripts/ \
-    && sync \
-    && sed -i '$isource activate neuro' $ND_ENTRYPOINT
-
-#---------------
-# BIDS-validator
-#---------------
-RUN npm install -g bids-validator@1.3.0
 
 #--------------------------------------------------
 # Add NeuroDebian repository
@@ -127,33 +80,107 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends git-annex-
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+#Install nvm
+ENV NVM_DIR /usr/local/nvm
+ENV NODE_VERSION 10.16.3
+# install nvm
+# https://github.com/creationix/nvm#install-script
+RUN curl --silent -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.2/install.sh | bash
+
+# install node and npm
+RUN source $NVM_DIR/nvm.sh \
+    && nvm install $NODE_VERSION \
+    && nvm alias default $NODE_VERSION \
+    && nvm use default
+
+# add node and npm to path so the commands are available
+ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
+ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
 #--------------------
 # Download mri_deface
 #--------------------
 # Download mri_deface nd additional files from MGH
+USER root
 ENV DEFACE_DIR /src/deface
-RUN mkdir -p ${DEFACE_DIR}
+RUN mkdir -p $DEFACE_DIR
 
-RUN wget -N -qO- -O ${DEFACE_DIR}/mri_deface.gz \
-  ftp://surfer.nmr.mgh.harvard.edu/pub/dist/mri_deface/mri_deface-v1.22-Linux64.gz && \
-  gunzip ${DEFACE_DIR}/mri_deface.gz && \
-  chmod +x ${DEFACE_DIR}/mri_deface
+RUN curl -sSL -o $DEFACE_DIR/mri_deface \
+  ftp://surfer.nmr.mgh.harvard.edu/pub/dist/mri_deface/mri_deface_linux && \
+  chmod +x $DEFACE_DIR/mri_deface
 
-RUN wget -N -qO- -O ${DEFACE_DIR}/face.gca.gz \
+RUN curl -sSL -o $DEFACE_DIR/face.gca.gz \
   ftp://surfer.nmr.mgh.harvard.edu/pub/dist/mri_deface/face.gca.gz && \
-  gunzip ${DEFACE_DIR}/face.gca.gz
+  gunzip $DEFACE_DIR/face.gca.gz
 
-RUN wget -N -qO- -O ${DEFACE_DIR}/talairach_mixed_with_skull.gca.gz \
+RUN curl -sSL -o $DEFACE_DIR/talairach_mixed_with_skull.gca.gz \
   ftp://surfer.nmr.mgh.harvard.edu/pub/dist/mri_deface/talairach_mixed_with_skull.gca.gz && \
-  gunzip ${DEFACE_DIR}/talairach_mixed_with_skull.gca.gz
+  gunzip $DEFACE_DIR/talairach_mixed_with_skull.gca.gz
 
-ENV PATH=$PATH:${DEFACE_DIR}
+ENV PATH=$PATH:$DEFACE_DIR
 
-# Create new user: neuro
+#---------------
+# BIDS-validator
+#---------------
+RUN npm install -g bids-validator@1.3.0
+
+#-------------------------
+# Create conda environment
+#-------------------------
 RUN useradd --no-user-group --create-home --shell /bin/bash neuro
+
 USER neuro
 
 WORKDIR /home/neuro
+
+#------------------
+# Install Miniconda
+#------------------
+ENV CONDA_DIR=/opt/conda \
+    PATH=/opt/conda/bin:$PATH
+RUN echo "Downloading Miniconda installer ..." \
+    && miniconda_installer=/tmp/miniconda.sh \
+    && curl -sSL --retry 5 -o $miniconda_installer https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    && /bin/bash $miniconda_installer -b -p $CONDA_DIR \
+    && rm -f $miniconda_installer \
+    && conda update -yq -nbase conda \
+    && conda config --system --prepend channels conda-forge \
+    && conda config --system --set auto_update_conda false \
+    && conda config --system --set show_channel_urls true \
+    && conda clean -tipsy && sync
+
+RUN conda create -y -q --name neuro \
+    && conda install -y -q --name neuro \
+               "python=3.7" \
+               "icu=64.2" \
+               "mkl=2019.4" \
+               "mkl-service=2.3.0" \
+               "git=2.23.0" \
+    && sync && conda clean --all && sync
+
+RUN conda install -y -q --name neuro \
+               "traits=4.6.0" \
+               "numpy=1.17.2" \
+               "pandas=0.25.1" \
+               "scipy=1.3.1" \
+    && sync && conda clean --all && sync
+
+COPY [".", "/src/bidsify"]
+
+USER root
+
+RUN mkdir /work && chown -R neuro /src /work
+
+USER neuro
+
+RUN bash -c "source activate neuro \
+    && pip install --no-cache-dir /src/bidsify/" \
+    && rm -rf ~/.cache/pip/* \
+    && sync \
+    && sed -i '$isource activate neuro' $ND_ENTRYPOINT
+
+ENTRYPOINT ["/neurodocker/startup.sh", "bidsify"]
+
 
 #--------------------------------------------
 # Set environmental variables for Singularity
@@ -164,8 +191,5 @@ ENV SINGULARITY_TMPDIR /scratch
 #----------------------
 # Set entrypoint script
 #----------------------
-COPY ./ /scripts/
-USER root
-RUN chmod 755 -R /scripts/
 USER neuro
-ENTRYPOINT ["/neurodocker/startup.sh", "bidsify"]
+WORKDIR /work
