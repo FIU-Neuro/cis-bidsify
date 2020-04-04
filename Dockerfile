@@ -179,7 +179,7 @@ RUN bash -c "source activate neuro \
     && sync \
     && sed -i '$isource activate neuro' $ND_ENTRYPOINT
 
-ENTRYPOINT ["/neurodocker/startup.sh", "fitlins"]
+ENTRYPOINT ["/neurodocker/startup.sh", "bidsify"]
 
 
 #--------------------------------------------
