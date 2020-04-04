@@ -96,8 +96,8 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
     # Run defacer
     anat_files = sub_dir.glob('/anat/*.nii.gz')
     for anat in anat_files:
-        cmd = (f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca '
-               '/src/deface/face.gca {anat}')
+        cmd = f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca \
+               /src/deface/face.gca {anat}'
         run(cmd, env={'TMPDIR': tmp_path.name})
 
     # Run json completer
