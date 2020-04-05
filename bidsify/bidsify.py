@@ -13,6 +13,7 @@ from bidsutils import complete_jsons, clean_metadata
 # Local imports
 from bidsify.utils import run, manage_dicom_dir, maintain_bids
 
+
 def _get_parser():
     """
     Set up argument parser for scripts
@@ -91,7 +92,7 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
     cmd = f'heudiconv {dir_type} {dicom_dir} \
             -s {subject} -f {heuristics} -c dcm2niix \
             -o {output_dir} --bids --overwrite --minmeta'
-    #heudiconv_retval = run(cmd, env={'TMPDIR': tmp_path.name})
+    run(cmd, env={'TMPDIR': tmp_path.name})
 
     # Run defacer
     anat_files = sub_dir.glob('/anat/*.nii.gz')

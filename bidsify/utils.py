@@ -42,6 +42,7 @@ def run(command, env=None):
                                             process.stdout.read()))
     return process.returncode
 
+
 def manage_dicom_dir(dicom_dir):
     """
     Helper function to grab data from dicom header depending on the type of dicom

@@ -17,12 +17,12 @@ jobs:
           command: |
             conda create -n venv python=3.7 pylint -yq
             source activate venv
-            pip install 'flake8<3.0' flake8-putty
+            pip install flake8
       - run:
           name: Style check
           command: |
             source activate venv
-            flake8 --max-line-length=100 --exclude=heuristics /tmp/src/cis-bidsify
+            flake8 --max-line-length=100 --exclude=versioneer.py /tmp/src/cis-bidsify
 workflows:
   version: 2.1
   build_test:
