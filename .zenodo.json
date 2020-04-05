@@ -1,0 +1,19 @@
+{
+  "creators": [
+    {
+      "name": "Salo, Taylor",
+      "affiliation": "Florida International University",
+      "orcid": "0000-0001-9813-3167"
+    },
+    {
+      "affiliation": "Florida International University",
+      "name": "Kimbler, Adam",
+      "orcid": "0000-0001-5885-9596"
+    }    
+  ],
+  "keywords": [
+    "neuroimaging"
+  ],
+  "license": "Apache 2.0",
+  "upload_type": "software"
+}
