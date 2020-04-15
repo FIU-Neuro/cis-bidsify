@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-From https://github.com/BIDS-Apps/example/blob/aa0d4808974d79c9fbe54d56d3b47bb2cf4e0a0d/run.py
-"""
+"""Run process and anonymize dicoms."""
 import argparse
 from pathlib import Path
 from dateutil.parser import parse
@@ -15,9 +13,7 @@ from bidsify.utils import run, manage_dicom_dir, maintain_bids
 
 
 def _get_parser():
-    """
-    Set up argument parser for scripts
-    """
+    """Set up argument parser for scripts."""
     parser = argparse.ArgumentParser(description='BIDS conversion and '
                                                  'anonymization.')
     parser.add_argument('-d', '--dicomdir', type=Path,
@@ -42,8 +38,7 @@ def _get_parser():
 
 
 def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.'):
-    """
-    Run the BIDSification workflow.
+    """Run the BIDSification workflow.
 
     Parameters
     ----------
@@ -63,17 +58,21 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
         if not heuristics.is_file():
             raise ValueError('Argument "heuristics" must be an existing file.')
 
-    if dicom_dir.is_file() and str(dicom_dir).endswith('.gz') or str(dicom_dir.endswith('.tar')):
+    if dicom_dir.is_file():
+        dcm_name = str(dicom_dir.as_posix())
+        if not dcm_name.endswith('.gz') or dcm_name.endswith('.tar'):
+            raise ValueError('Heudiconv currently only accepts '
+                             '.tar and .tar.gz inputs')
         dir_type = '-d'
-        heudiconv_input = dicom_dir.as_posix().replace(subject, '{subject}')
+        heudiconv_input = dcm_name.replace(subject, '{subject}')
         if session:
             heudiconv_input = heudiconv_input.replace(session, '{session}')
     elif dicom_dir.is_dir():
         dir_type = '--files'
-        heudiconv_input = dicom_dir.as_posix()
+        heudiconv_input = str(dicom_dir.as_posix())
     else:
-        raise ValueError('dicom-dir must be a tarball or directory containing dicoms'
-                         'value of ')
+        raise ValueError('dicom-dir must be a tarball '
+                         'or directory containing dicoms')
 
     sub_dir = output_dir / f'sub-{subject}'
     if session:
@@ -89,16 +88,16 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
             wk_file.write('.heudiconv/\ntmp/\nvalidator.txt\n')
 
     # Run heudiconv
-    cmd = f'heudiconv {dir_type} {dicom_dir} \
-            -s {subject} -f {heuristics} -c dcm2niix \
-            -o {output_dir} --bids --overwrite --minmeta'
+    cmd = (f'heudiconv {dir_type} {dicom_dir}'
+           f'-s {subject} -f {heuristics} -c dcm2niix'
+           f'-o {output_dir} --bids --overwrite --minmeta')
     run(cmd, env={'TMPDIR': tmp_path.name})
 
     # Run defacer
     anat_files = sub_dir.glob('/anat/*.nii.gz')
     for anat in anat_files:
-        cmd = f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca \
-               /src/deface/face.gca {anat}'
+        cmd = (f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca'
+               f'/src/deface/face.gca {anat}')
         run(cmd, env={'TMPDIR': tmp_path.name})
 
     # Run json completer
@@ -108,10 +107,8 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
     clean_metadata(output_dir, subject, session)
 
     # Run BIDS validator
-    cmd = ('bids-validator {out_dir} --ignoreWarnings > '
-           '{out_file}').format(
-               out_dir=output_dir,
-               out_file=output_dir / 'validator.txt')
+    cmd = (f'bids-validator {output_dir} --ignoreWarnings > '
+           f'{output_dir / "validator.txt"}')
     run(cmd, env={'TMPDIR': tmp_path.name})
 
     # Clean up output directory, returning it to bids standard
@@ -143,9 +140,7 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
 
 
 def _main(argv=None):
-    '''
-    Bidsify Runtime
-    '''
+    """Bidsify Runtime."""
     options = _get_parser().parse_args(argv)
     kwargs = vars(options)
     bidsify_workflow(**kwargs)
