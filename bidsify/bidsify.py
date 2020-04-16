@@ -6,8 +6,7 @@ from dateutil.parser import parse
 
 import numpy as np
 import pandas as pd
-from bidsutils import complete_jsons, clean_metadata
-
+from bidsutils.metadata import complete_jsons, clean_metadata
 # Local imports
 from bidsify.utils import run, manage_dicom_dir, maintain_bids
 
@@ -38,8 +37,7 @@ def _get_parser():
 
 
 def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.'):
-    """
-    Run the BIDSification workflow.
+    """Run the BIDSification workflow.
 
     Parameters
     ----------

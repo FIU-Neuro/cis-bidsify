@@ -149,23 +149,18 @@ RUN echo "Downloading Miniconda installer ..." \
     && conda config --system --set show_channel_urls true \
     && conda clean -tipsy && sync
 
-RUN conda create -y -q --name neuro \
-    && conda install -y -q --name neuro \
-               "python=3.7" \
-               "icu=64.2" \
-               "mkl=2019.4" \
-               "mkl-service=2.3.0" \
-               "git=2.23.0" \
-    && sync && conda clean --all && sync
-
-RUN conda install -y -q --name neuro \
-               "traits=4.6.0" \
-               "numpy=1.17.2" \
-               "pandas=0.25.1" \
-               "scipy=1.3.1" \
-    && sync && conda clean --all && sync
-
+#-------------------------
+# Create conda environment
+#-------------------------
 COPY [".", "/src/bidsify"]
+USER root
+RUN chmod 755 -R /src/
+RUN conda create -y -q --name neuro python=3.7 \
+    && sync && conda clean --all && sync \
+    && /bin/bash -c "source activate neuro \
+          && pip install /src/bidsify/"\
+    && sync \
+    && sed -i '$isource activate neuro' $ND_ENTRYPOINT
 
 USER root
 
