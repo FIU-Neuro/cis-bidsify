@@ -90,14 +90,14 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
 
     # Run heudiconv
     cmd = (f'heudiconv {dir_type} {dicom_dir}'
-           f'-s {subject} -f {heuristics} -c dcm2niix'
+           f'-s {subject} -f {heuristics} -c dcm2niix '
            f'-o {output_dir} --bids --overwrite --minmeta')
     run(cmd, env={'TMPDIR': tmp_path.name})
 
     # Run defacer
     anat_files = sub_dir.glob('/anat/*.nii.gz')
     for anat in anat_files:
-        cmd = (f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca'
+        cmd = (f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca '
                f'/src/deface/face.gca {anat}')
         run(cmd, env={'TMPDIR': tmp_path.name})
 
