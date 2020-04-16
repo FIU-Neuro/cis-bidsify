@@ -8,7 +8,7 @@ if __name__ == '__main__':
     from bidsify.__about__ import __version__, DOWNLOAD_URL
 
     setup(
-        name='cis-bidsify',
+        name='bidsify',
         version=__version__,
         cmdclass=versioneer.get_cmdclass(),
         download_url=DOWNLOAD_URL
