@@ -38,7 +38,8 @@ def _get_parser():
 
 
 def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.'):
-    """Run the BIDSification workflow.
+    """
+    Run the BIDSification workflow.
 
     Parameters
     ----------
