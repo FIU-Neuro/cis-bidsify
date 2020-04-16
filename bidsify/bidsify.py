@@ -89,7 +89,7 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
             wk_file.write('.heudiconv/\ntmp/\nvalidator.txt\n')
 
     # Run heudiconv
-    cmd = (f'heudiconv {dir_type} {dicom_dir}'
+    cmd = (f'heudiconv {dir_type} {dicom_dir} '
            f'-s {subject} -f {heuristics} -c dcm2niix '
            f'-o {output_dir} --bids --overwrite --minmeta')
     run(cmd, env={'TMPDIR': tmp_path.name})
