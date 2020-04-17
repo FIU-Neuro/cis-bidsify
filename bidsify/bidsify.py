@@ -129,11 +129,14 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
             age = np.round(age.days / 365.25, 2)
         else:
             age = np.nan
-
-        new_participant = pd.DataFrame(columns=['age', 'sex', 'weight'],
-                                       data=[[age, data.PatientSex,
-                                              data.PatientWeight]])
-        participant_df = pd.concat([participant_df, new_participant], axis=1)
+        column_set = set(participant_df.columns)
+        # If participant_df already has age, sex, and weight, skip
+        if not column_set.issuperset({'age', 'sex', 'weight'}):
+            new_participant = pd.DataFrame(
+                columns=['age', 'sex', 'weight'],
+                data=[[age, data.PatientSex, data.PatientWeight]])
+            participant_df = pd.concat([participant_df, new_participant], axis=1)
+        participant_df.sort_values(by='participant_id', axis=1, inplace=True)
         participant_df.to_csv(participants_file, sep='\t',
                               line_terminator='\n', index=False)
 
