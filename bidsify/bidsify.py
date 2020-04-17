@@ -148,7 +148,7 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
         participant_df.sort_index(inplace=True)
         participant_df.to_csv(
             participants_file, sep='\t', na_rep='n/a',
-            line_terminator='\n', index=False, index_label='participant_id')
+            line_terminator='\n', index_label='participant_id')
 
 
 def _main(argv=None):
