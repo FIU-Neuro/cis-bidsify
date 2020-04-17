@@ -78,10 +78,10 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
         sub_dir = output_dir / f'sub-{subject}/ses-{session}'
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    tmp_path = output_dir / 'tmp' / subject
+    tmp_path = output_dir / '.tmp' / subject
     tmp_path.mkdir(parents=True, exist_ok=True)
     if session:
-        tmp_path = output_dir / 'tmp' / subject / session
+        tmp_path = output_dir / '.tmp' / subject / session
     if not (output_dir / '.bidsignore').is_file():
         with (output_dir / '.bidsignore').open('w') as wk_file:
             wk_file.write('.heudiconv/\ntmp/\nvalidator.txt\n')
