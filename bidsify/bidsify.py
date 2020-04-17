@@ -78,13 +78,13 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
         sub_dir = output_dir / f'sub-{subject}/ses-{session}'
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    tmp_path = output_dir / 'tmp' / subject
+    tmp_path = output_dir / '.tmp' / subject
     tmp_path.mkdir(parents=True, exist_ok=True)
     if session:
-        tmp_path = output_dir / 'tmp' / subject / session
+        tmp_path = output_dir / '.tmp' / subject / session
     if not (output_dir / '.bidsignore').is_file():
         with (output_dir / '.bidsignore').open('w') as wk_file:
-            wk_file.write('.heudiconv/\ntmp/\nvalidator.txt\n')
+            wk_file.write('.heudiconv/\n.tmp/\nvalidator.txt\n')
 
     # Run heudiconv
     cmd = (f'heudiconv {dir_type} {dicom_dir} '
@@ -116,26 +116,39 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
     # Grab some info from the dicoms to add to the participants file
     participants_file = output_dir / 'participants.tsv'
     if participants_file.is_file():
-        participant_df = pd.read_table(participants_file)
+        participant_df = pd.read_table(
+            participants_file, index_col='participant_id')
         data = manage_dicom_dir(dicom_dir)
+        participant_id = f'sub-{subject}'
         if data.get('PatientAge'):
             age = data.PatientAge.replace('Y', '')
             try:
                 age = int(age)
             except ValueError:
-                pass
+                age = np.nan
         elif data.get('PatientBirthDate'):
             age = parse(data.StudyDate) - parse(data.PatientBirthDate)
             age = np.round(age.days / 365.25, 2)
         else:
             age = np.nan
 
-        new_participant = pd.DataFrame(columns=['age', 'sex', 'weight'],
-                                       data=[[age, data.PatientSex,
-                                              data.PatientWeight]])
-        participant_df = pd.concat([participant_df, new_participant], axis=1)
-        participant_df.to_csv(participants_file, sep='\t',
-                              line_terminator='\n', index=False)
+        additional_data = pd.DataFrame(
+            columns=['age', 'sex', 'weight'],
+            data=[[age, data.PatientSex, data.PatientWeight]],
+            index=[participant_id])
+
+        missing_cols = [col for col in additional_data.columns
+                        if col not in data.columns]
+        for mc in missing_cols:
+            participant_df[mc] = np.nan
+        if participant_id not in participant_df.index.values:
+            participant_df.loc[participant_id] = np.nan
+
+        participant_df.update(additional_data, overwrite=True)
+        participant_df.sort_index(inplace=True)
+        participant_df.to_csv(
+            participants_file, sep='\t', na_rep='n/a',
+            line_terminator='\n', index_label='participant_id')
 
 
 def _main(argv=None):
