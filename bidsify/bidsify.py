@@ -118,26 +118,30 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
     if participants_file.is_file():
         participant_df = pd.read_table(participants_file)
         data = manage_dicom_dir(dicom_dir)
+        participant_id = f'sub-{subject}'
         if data.get('PatientAge'):
             age = data.PatientAge.replace('Y', '')
             try:
                 age = int(age)
             except ValueError:
-                pass
+                age = np.nan
         elif data.get('PatientBirthDate'):
             age = parse(data.StudyDate) - parse(data.PatientBirthDate)
             age = np.round(age.days / 365.25, 2)
         else:
             age = np.nan
-        column_set = set(participant_df.columns)
-        # If participant_df already has age, sex, and weight, skip
-        if not column_set.issuperset({'age', 'sex', 'weight'}):
-            new_participant = pd.DataFrame(
-                columns=['age', 'sex', 'weight'],
-                data=[[age, data.PatientSex, data.PatientWeight]])
-            participant_df = pd.concat([participant_df, new_participant], axis=1)
+
+        if participant_id in participant_df['participant_id'].values:
+            additional_data = pd.DataFrame(
+                columns=['participant_data', 'age', 'sex', 'weight'],
+                data=[[participant_id, age, data.PatientSex, data.PatientWeight]])
+            participant_df = pd.merge(
+                participant_df,
+                additional_data,
+                on='participant_id', how='right')
+
         participant_df.sort_values(by='participant_id', axis=1, inplace=True)
-        participant_df.to_csv(participants_file, sep='\t',
+        participant_df.to_csv(participants_file, sep='\t', na_rep='n/a',
                               line_terminator='\n', index=False)
 
 
