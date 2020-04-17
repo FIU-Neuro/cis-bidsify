@@ -116,7 +116,8 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
     # Grab some info from the dicoms to add to the participants file
     participants_file = output_dir / 'participants.tsv'
     if participants_file.is_file():
-        participant_df = pd.read_table(participants_file)
+        participant_df = pd.read_table(
+            participants_file, index_col='participant_id')
         data = manage_dicom_dir(dicom_dir)
         participant_id = f'sub-{subject}'
         if data.get('PatientAge'):
@@ -131,18 +132,23 @@ def bidsify_workflow(dicom_dir, heuristics, subject, session=None, output_dir='.
         else:
             age = np.nan
 
-        if participant_id in participant_df['participant_id'].values:
-            additional_data = pd.DataFrame(
-                columns=['participant_data', 'age', 'sex', 'weight'],
-                data=[[participant_id, age, data.PatientSex, data.PatientWeight]])
-            participant_df = pd.merge(
-                participant_df,
-                additional_data,
-                on='participant_id', how='right')
+        additional_data = pd.DataFrame(
+            columns=['age', 'sex', 'weight'],
+            data=[[age, data.PatientSex, data.PatientWeight]],
+            index=[participant_id])
 
-        participant_df.sort_values(by='participant_id', axis=1, inplace=True)
-        participant_df.to_csv(participants_file, sep='\t', na_rep='n/a',
-                              line_terminator='\n', index=False)
+        missing_cols = [col for col in additional_data.columns
+                        if col not in data.columns]
+        for mc in missing_cols:
+            participant_df[mc] = np.nan
+        if participant_id not in participant_df.index.values:
+            participant_df.loc[participant_id] = np.nan
+
+        participant_df.update(additional_data, overwrite=True)
+        participant_df.sort_index(inplace=True)
+        participant_df.to_csv(
+            participants_file, sep='\t', na_rep='n/a',
+            line_terminator='\n', index=False, index_label='participant_id')
 
 
 def _main(argv=None):
