@@ -38,24 +38,24 @@ def run(command, env=None):
     return process.returncode
 
 
-def manage_dicom_dir(dicom_dir):
+def manage_dicomdir(dicomdir):
     """Grab data from dicom directory of a given type (tar, tar.gz, directory).
 
     Parameters
     ----------
-    dicom_dir: Directory containing dicoms for processing
+    dicomdir: Directory containing dicoms for processing
     """
-    if dicom_dir.is_file() and dicom_dir.suffix in ('.gz', '.tar'):
+    if dicomdir.is_file() and dicomdir.suffix in ('.gz', '.tar'):
         open_type = 'r'
-        if dicom_dir.suffix == '.gz':
+        if dicomdir.suffix == '.gz':
             open_type = 'r:gz'
-        with tarfile.open(dicom_dir, open_type) as tar:
+        with tarfile.open(dicomdir, open_type) as tar:
             dicoms = [mem for mem in tar.getmembers() if
                       mem.name.endswith('.dcm')]
             f_obj = tar.extractfile(dicoms[0])
             data = pydicom.read_file(f_obj)
-    elif dicom_dir.is_dir():
-        dcm_files = list(Path(dicom_dir).glob('**/*.dcm'))
+    elif dicomdir.is_dir():
+        dcm_files = list(Path(dicomdir).glob('**/*.dcm'))
         f_obj = dcm_files[0].as_posix()
         data = pydicom.read_file(f_obj)
     return data
