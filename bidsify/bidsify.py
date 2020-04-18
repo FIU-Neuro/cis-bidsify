@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from bidsutils.metadata import complete_jsons, clean_metadata
 # Local imports
-from bidsify.utils import run, manage_dicom_dir, maintain_bids
+from bidsify.utils import run, manage_dicomdir, maintain_bids
 
 
 def _get_parser():
@@ -133,7 +133,7 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None, output_dir='.')
     if participants_file.is_file():
         participant_df = pd.read_table(
             participants_file, index_col='participant_id')
-        data = manage_dicom_dir(dicomdir)
+        data = manage_dicomdir(dicomdir)
         participant_id = f'sub-{subject}'
         if data.get('PatientAge'):
             age = data.PatientAge.replace('Y', '')
