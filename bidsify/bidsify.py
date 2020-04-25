@@ -7,6 +7,7 @@ from dateutil.parser import parse
 
 import numpy as np
 import pandas as pd
+from heudiconv.main import workflow as heudiconv
 from bidsutils.metadata import complete_jsons, clean_metadata
 # Local imports
 from bidsify.utils import run, manage_dicomdir, maintain_bids
@@ -42,10 +43,17 @@ def _get_parser():
                         required=True,
                         metavar='PATH',
                         help='Output directory')
+    parser.add_argument('--datalad',
+                        type=bool,
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help='Use datalad to track changes to dataset.')
     return parser
 
 
-def bidsify_workflow(dicomdir, heuristic, subject, session=None, output_dir='.'):
+def bidsify_workflow(dicomdir, heuristic, subject, session=None,
+                     output_dir='.', datalad=False):
     """Run the BIDSification workflow.
 
     This workflow (1) runs heudiconv to convert dicoms to nifti BIDS format,
@@ -66,6 +74,8 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None, output_dir='.')
     output_dir : str, optional
         Directory to output bidsified data. Default is '.' (current working
         directory).
+    datalad : bool, optional
+        Whether to use datalad or not. Default is False.
     """
     # Heuristic may be file or heudiconv builtin
     # Use existence of file extension to determine if builtin or file
@@ -102,10 +112,16 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None, output_dir='.')
             wk_file.write('.heudiconv/\n.tmp/\nvalidator.txt\n')
 
     # Run heudiconv
-    cmd = (f'heudiconv {dir_type} {dicomdir} '
-           f'-s {subject} -f {heuristic} -c dcm2niix '
-           f'-o {output_dir} --bids --overwrite --minmeta')
-    run(cmd, env={'TMPDIR': tmp_path.name})
+    if dir_type = '-d':
+        heudiconv(dicom_dir_template=dicomdir, subjs=subject,
+                  heuristic=heuristic, converter='dcm2niix', outdir=output_dir,
+                  bids_options=True, overwrite=True, minmeta=True,
+                  datalad=datalad, with_prov=True)
+    else:
+        heudiconv(files=dicomdir, subjs=subject,
+                  heuristic=heuristic, converter='dcm2niix', outdir=output_dir,
+                  bids_options=True, overwrite=True, minmeta=True,
+                  datalad=datalad, with_prov=True)
 
     # Run defacer
     anat_files = sub_dir.glob('/anat/*.nii.gz')
