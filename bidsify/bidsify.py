@@ -42,7 +42,16 @@ def _get_parser():
                         dest='output_dir',
                         required=True,
                         metavar='PATH',
-                        help='Output directory')
+                        help="BIDS dataset directory. Must be either in "
+                             "scratch, the user's home directory, or within "
+                             "the current working directory.")
+    parser.add_argument('-w', '--work_dir',
+                        type=Path,
+                        dest='work_dir',
+                        required=False,
+                        metavar='PATH',
+                        default=None,
+                        help='Working directory (in scratch).')
     parser.add_argument('--datalad',
                         type=bool,
                         required=False,
@@ -53,7 +62,7 @@ def _get_parser():
 
 
 def bidsify_workflow(dicomdir, heuristic, subject, session=None,
-                     output_dir='.', datalad=False):
+                     output_dir='.', work_dir=None, datalad=False):
     """Run the BIDSification workflow.
 
     This workflow (1) runs heudiconv to convert dicoms to nifti BIDS format,
@@ -72,8 +81,12 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     session : str or None, optional
         Session ID. Default is None.
     output_dir : str, optional
-        Directory to output bidsified data. Default is '.' (current working
-        directory).
+        BIDS dataset directory. Must be either in scratch, the user's home
+        directory, or within the current working directory. Default is '.'
+        (current working directory).
+    work_dir : str, optional
+        Working directory (in scratch). Default is None, which will generate a
+        temporary directory within the output directory.
     datalad : bool, optional
         Whether to use datalad or not. Default is False.
     """
@@ -87,9 +100,9 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         if not dcm_name.endswith('.gz') or dcm_name.endswith('.tar'):
             raise ValueError('Heudiconv currently only accepts '
                              '.tar and .tar.gz inputs')
-        dir_type = '-d'
+        dir_type = 'tarball'
     elif dicomdir.is_dir():
-        dir_type = '--files'
+        dir_type = 'folder'
     else:
         raise ValueError('dicomdir must be a tarball '
                          'or directory containing dicoms')
@@ -99,32 +112,38 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         sub_dir = output_dir / f'sub-{subject}/ses-{session}'
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    tmp_path = output_dir / '.tmp' / subject
-    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    if work_dir is None:
+        work_dir = output_dir / '.tmp'
+
+    work_dir = work_dir / subject
     if session:
-        tmp_path = output_dir / '.tmp' / subject / session
+        work_dir = work_dir / session
+    work_dir.mkdir(parents=True, exist_ok=True)
+
     if not (output_dir / '.bidsignore').is_file():
-        with (output_dir / '.bidsignore').open('w') as wk_file:
-            wk_file.write('.heudiconv/\n.tmp/\nvalidator.txt\n')
+        to_ignore = ['.heudiconv/', '.tmp/', 'validator.txt']
+        with (output_dir / '.bidsignore').open('w') as fo:
+            fo.write('\n'.join(to_ignore))
 
     # Run heudiconv
-    if dir_type = '-d':
+    if dir_type = 'tarball':
         heudiconv(dicom_dir_template=dicomdir, subjs=subject,
-                  heuristic=heuristic, converter='dcm2niix', outdir=output_dir,
-                  bids_options=True, overwrite=True, minmeta=True,
-                  datalad=datalad, with_prov=True)
+                  heuristic=heuristic, converter='dcm2niix',
+                  outdir=output_dir, bids_options=True, overwrite=True,
+                  minmeta=True, datalad=datalad, with_prov=True)
     else:
         heudiconv(files=dicomdir, subjs=subject,
-                  heuristic=heuristic, converter='dcm2niix', outdir=output_dir,
-                  bids_options=True, overwrite=True, minmeta=True,
-                  datalad=datalad, with_prov=True)
+                  heuristic=heuristic, converter='dcm2niix',
+                  outdir=output_dir, bids_options=True, overwrite=True,
+                  minmeta=True, datalad=datalad, with_prov=True)
 
     # Run defacer
     anat_files = sub_dir.glob('/anat/*.nii.gz')
     for anat in anat_files:
         cmd = (f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca '
                f'/src/deface/face.gca {anat}')
-        run(cmd, env={'TMPDIR': tmp_path.name})
+        run(cmd, env={'TMPDIR': work_dir.name})
 
     # Run json completer
     complete_jsons(output_dir, subject, session, overwrite=True)
@@ -135,7 +154,7 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     # Run BIDS validator
     cmd = (f'bids-validator {output_dir} --ignoreWarnings > '
            f'{output_dir / "validator.txt"}')
-    run(cmd, env={'TMPDIR': tmp_path.name})
+    run(cmd, env={'TMPDIR': work_dir.name})
 
     # Clean up output directory, returning it to bids standard
     maintain_bids(output_dir, subject, session)
