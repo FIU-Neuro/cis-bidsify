@@ -115,10 +115,9 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
 
     if work_dir is None:
         work_dir = output_dir / '.tmp'
-
-    work_dir = work_dir / subject
-    if session:
-        work_dir = work_dir / session
+        work_dir = work_dir / subject
+        if session:
+            work_dir = work_dir / session
     work_dir.mkdir(parents=True, exist_ok=True)
 
     if not (output_dir / '.bidsignore').is_file():
@@ -153,10 +152,10 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
 
     # Run BIDS validator
     cmd = (f'bids-validator {output_dir} --ignoreWarnings > '
-           f'{output_dir / "validator.txt"}')
+           f'{work_dir / "validator.txt"}')
     run(cmd, env={'TMPDIR': work_dir.name})
 
-    # Clean up output directory, returning it to bids standard
+    # Remove temporary subfolders from output directory
     maintain_bids(output_dir, subject, session)
 
     # Grab some info from the dicoms to add to the participants file

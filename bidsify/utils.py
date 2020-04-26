@@ -65,7 +65,7 @@ def maintain_bids(output_dir, sub, ses):
     """Clean up a working directory and make it BIDS standard.
 
     Clean up working directories. If all work is complete, this will return the
-    directory to BIDS standard (removing .heudiconv and tmp directories).
+    directory to BIDS standard (removing .heudiconv and .tmp directories).
 
     Parameters
     ----------
