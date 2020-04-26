@@ -126,7 +126,7 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
             fo.write('\n'.join(to_ignore))
 
     # Run heudiconv
-    if dir_type = 'tarball':
+    if dir_type == 'tarball':
         heudiconv(dicom_dir_template=dicomdir, subjs=subject,
                   heuristic=heuristic, converter='dcm2niix',
                   outdir=output_dir, bids_options=True, overwrite=True,
