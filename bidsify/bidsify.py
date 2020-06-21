@@ -10,7 +10,7 @@ import pandas as pd
 from heudiconv.main import workflow as heudiconv
 from bidsutils.metadata import complete_jsons, clean_metadata
 # Local imports
-from bidsify.utils import run, manage_dicomdir, maintain_bids
+from bidsify.utils import run, load_dicomdir_metadata, clean_tempdirs
 
 
 def _get_parser():
@@ -89,6 +89,12 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         temporary directory within the output directory.
     datalad : bool, optional
         Whether to use datalad or not. Default is False.
+
+    Warning
+    -------
+    When data are located in `/home/data`, this workflow *must* be run from a
+    parent of the output and data directories. This is because Singularity
+    cannot mount `/home/data` if it is not in the current path.
     """
     # Heuristic may be file or heudiconv builtin
     # Use existence of file extension to determine if builtin or file
@@ -144,10 +150,10 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
                f'/src/deface/face.gca {anat}')
         run(cmd, env={'TMPDIR': work_dir.name})
 
-    # Run json completer
+    # Add IntendedFor field to field maps and calculate TotalReadoutTime
     complete_jsons(output_dir, subject, session, overwrite=True)
 
-    # Run metadata cleaner
+    # Move "global" metadata keys to top level in jsons
     clean_metadata(output_dir, subject, session)
 
     # Run BIDS validator
@@ -156,14 +162,14 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     run(cmd, env={'TMPDIR': work_dir.name})
 
     # Remove temporary subfolders from output directory
-    maintain_bids(output_dir, subject, session)
+    clean_tempdirs(output_dir, subject, session)
 
     # Grab some info from the dicoms to add to the participants file
     participants_file = output_dir / 'participants.tsv'
     if participants_file.is_file():
         participant_df = pd.read_table(
             participants_file, index_col='participant_id')
-        data = manage_dicomdir(dicomdir)
+        data = load_dicomdir_metadata(dicomdir)
         participant_id = f'sub-{subject}'
         if data.get('PatientAge'):
             age = data.PatientAge.replace('Y', '')
