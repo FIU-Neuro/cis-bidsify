@@ -41,6 +41,7 @@ RUN apt-get update -qq \
                                                      gcc \
                                                      pigz \
                                                      curl \
+                                                     datalad \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

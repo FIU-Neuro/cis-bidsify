@@ -38,12 +38,17 @@ def run(command, env=None):
     return process.returncode
 
 
-def manage_dicomdir(dicomdir):
+def load_dicomdir_metadata(dicomdir):
     """Grab data from dicom directory of a given type (tar, tar.gz, directory).
 
     Parameters
     ----------
     dicomdir: Directory containing dicoms for processing
+
+    Returns
+    -------
+    data : dicom header
+        DICOM information from first dicom in directory.
     """
     if dicomdir.is_file() and dicomdir.suffix in ('.gz', '.tar'):
         open_type = 'r'
@@ -61,11 +66,11 @@ def manage_dicomdir(dicomdir):
     return data
 
 
-def maintain_bids(output_dir, sub, ses):
-    """Clean up a working directory and make it BIDS standard.
+def clean_tempdirs(output_dir, sub, ses):
+    """Clean up working directories (.heudiconv and .tmp).
 
-    Clean up working directories. If all work is complete, this will return the
-    directory to BIDS standard (removing .heudiconv and tmp directories).
+    If all work is complete, this will return the
+    directory to BIDS standard (removing .heudiconv and .tmp directories).
 
     Parameters
     ----------
