@@ -53,7 +53,6 @@ def _get_parser():
                         default=None,
                         help='Working directory (in scratch).')
     parser.add_argument('--datalad',
-                        type=bool,
                         required=False,
                         action='store_true',
                         default=False,
