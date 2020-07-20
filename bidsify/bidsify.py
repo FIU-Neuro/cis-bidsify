@@ -100,13 +100,14 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     if op.splitext(heuristic)[1] and not op.isfile(heuristic):
         raise ValueError('Heuristic file must be an existing file.')
 
-    if dicomdir.is_file():
-        dcm_name = str(dicomdir.as_posix())
+    temp_dicom_dir = Path(dicomdir.as_posix().format(subject=subject, session=session))
+    if temp_dicom_dir.is_file():
+        dcm_name = str(temp_dicom_dir.as_posix())
         if not dcm_name.endswith('.gz') or dcm_name.endswith('.tar'):
             raise ValueError('Heudiconv currently only accepts '
                              '.tar and .tar.gz inputs')
         dir_type = 'tarball'
-    elif dicomdir.is_dir():
+    elif temp_dicom_dir.is_dir() or temp_dicom_dir.endswith('.dcm'):
         dir_type = 'folder'
     else:
         raise ValueError('dicomdir must be a tarball '
@@ -132,12 +133,12 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
 
     # Run heudiconv
     if dir_type == 'tarball':
-        heudiconv(dicom_dir_template=str(dicomdir), subjs=[subject],
+        heudiconv(dicom_dir_template=dicomdir.as_posix(), subjs=[subject],
                   heuristic=heuristic, converter='dcm2niix',
                   outdir=str(output_dir), bids_options=True, overwrite=True,
                   minmeta=True, datalad=datalad, with_prov=True)
     else:
-        heudiconv(files=str(dicomdir), subjs=[subject],
+        heudiconv(files=dicomdir.as_posix(), subjs=[subject],
                   heuristic=heuristic, converter='dcm2niix',
                   outdir=str(output_dir), bids_options=True, overwrite=True,
                   minmeta=True, datalad=datalad, with_prov=True)
@@ -168,7 +169,7 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     if participants_file.is_file():
         participant_df = pd.read_table(
             participants_file, index_col='participant_id')
-        data = load_dicomdir_metadata(dicomdir)
+        data = load_dicomdir_metadata(temp_dicom_dir)
         participant_id = f'sub-{subject}'
         if data.get('PatientAge'):
             age = data.PatientAge.replace('Y', '')
