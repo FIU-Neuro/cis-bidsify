@@ -101,13 +101,13 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         raise ValueError('Heuristic file must be an existing file.')
 
     temp_dicom_dir = Path(dicomdir.as_posix().format(subject=subject, session=session))
+    dcm_name = temp_dicom_dir.as_posix()
     if temp_dicom_dir.is_file():
-        dcm_name = str(temp_dicom_dir.as_posix())
         if not dcm_name.endswith('.gz') or dcm_name.endswith('.tar'):
             raise ValueError('Heudiconv currently only accepts '
                              '.tar and .tar.gz inputs')
         dir_type = 'tarball'
-    elif temp_dicom_dir.is_dir() or temp_dicom_dir.endswith('.dcm'):
+    elif temp_dicom_dir.is_dir() or dcm_name.endswith('.dcm'):
         dir_type = 'folder'
     else:
         raise ValueError('dicomdir must be a tarball '
