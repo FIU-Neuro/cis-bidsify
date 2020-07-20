@@ -97,7 +97,7 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     """
     # Heuristic may be file or heudiconv builtin
     # Use existence of file extension to determine if builtin or file
-    if op.splitext(heuristic)[1] and (not heuristic.is_file()):
+    if op.splitext(heuristic)[1] and not op.isfile(heuristic):
         raise ValueError('Heuristic file must be an existing file.')
 
     if dicomdir.is_file():
