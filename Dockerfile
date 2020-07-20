@@ -23,7 +23,23 @@ ENV LANG="en_US.UTF-8" \
     ND_ENTRYPOINT="/neurodocker/startup.sh"
 
 RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
-    	apt-utils bzip2 ca-certificates curl locales unzip \
+    	apt-utils \
+        bzip2 \
+        ca-certificates \
+        cmake \
+        curl \
+        datalad \
+        dirmngr \
+        g++ \
+        gcc \
+        git \
+        gnupg \
+        locales \
+        make \
+        nano \
+        pigz \
+        unzip \
+        zlib1g-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && localedef --force --inputfile=en_US --charmap=UTF-8 C.UTF-8 \
@@ -36,25 +52,10 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
        fi \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
 
-RUN apt-get update -qq \
-    && apt-get install -y -q --no-install-recommends git \
-                                                     gcc \
-                                                     pigz \
-                                                     curl \
-                                                     datalad \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-ENTRYPOINT ["/neurodocker/startup.sh"]
-
 #------------------------
 # Install dcm2niix v1.0.20190410
 #------------------------
-RUN deps='cmake g++ gcc git make pigz zlib1g-dev' \
-    && apt-get update -qq && apt-get install -yq --no-install-recommends $deps \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && mkdir dcm2niix \
+RUN mkdir dcm2niix \
     && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20190410 | tar xz -C dcm2niix --strip-components 1 \
     && mkdir dcm2niix/build && cd dcm2niix/build \
     && cmake .. && make \
@@ -66,10 +67,7 @@ RUN deps='cmake g++ gcc git make pigz zlib1g-dev' \
 # Please note that some packages downloaded through
 # NeuroDebian may have restrictive licenses.
 #--------------------------------------------------
-RUN apt-get update -qq && apt-get install -yq --no-install-recommends dirmngr gnupg \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && curl -sSL http://neuro.debian.net/lists/stretch.us-nh.full \
+RUN curl -sSL http://neuro.debian.net/lists/stretch.us-nh.full \
     > /etc/apt/sources.list.d/neurodebian.sources.list \
     && curl -sSL https://dl.dropbox.com/s/zxs209o955q6vkg/neurodebian.gpg \
     | apt-key add - \
@@ -175,6 +173,9 @@ RUN bash -c "source activate neuro \
     && sync \
     && sed -i '$isource activate neuro' $ND_ENTRYPOINT
 
+#----------------------
+# Set entrypoint script
+#----------------------
 ENTRYPOINT ["/neurodocker/startup.sh", "bidsify"]
 
 
@@ -184,8 +185,8 @@ ENTRYPOINT ["/neurodocker/startup.sh", "bidsify"]
 ENV SINGULARITY_CACHEDIR /scratch
 ENV SINGULARITY_TMPDIR /scratch
 
-#----------------------
-# Set entrypoint script
-#----------------------
+#-------------------------------
+# Set user and working directory
+#-------------------------------
 USER neuro
 WORKDIR /work
