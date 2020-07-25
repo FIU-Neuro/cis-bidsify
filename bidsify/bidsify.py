@@ -136,14 +136,14 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         heudiconv(dicom_dir_template=dicomdir.as_posix(),
                   subjs=[subject], session=session,
                   heuristic=heuristic, converter='dcm2niix',
-                  outdir=str(output_dir), bids_options=True, overwrite=True,
-                  minmeta=True, datalad=datalad, with_prov=True)
+                  outdir=str(output_dir), overwrite=True,
+                  minmeta=True, datalad=datalad)
     else:
         heudiconv(files=dicomdir.as_posix(),
                   subjs=[subject], session=session,
                   heuristic=heuristic, converter='dcm2niix',
-                  outdir=str(output_dir), bids_options=True, overwrite=True,
-                  minmeta=True, datalad=datalad, with_prov=True)
+                  outdir=str(output_dir), overwrite=True,
+                  minmeta=True, datalad=datalad)
 
     # Run defacer
     anat_files = sub_dir.glob('/anat/*.nii.gz')
