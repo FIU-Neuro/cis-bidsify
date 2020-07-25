@@ -133,12 +133,14 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
 
     # Run heudiconv
     if dir_type == 'tarball':
-        heudiconv(dicom_dir_template=dicomdir.as_posix(), subjs=[subject],
+        heudiconv(dicom_dir_template=dicomdir.as_posix(), 
+                  subjs=[subject], session=session,
                   heuristic=heuristic, converter='dcm2niix',
                   outdir=str(output_dir), bids_options=True, overwrite=True,
                   minmeta=True, datalad=datalad, with_prov=True)
     else:
-        heudiconv(files=dicomdir.as_posix(), subjs=[subject],
+        heudiconv(files=dicomdir.as_posix(), 
+                  subjs=[subject], session=session,
                   heuristic=heuristic, converter='dcm2niix',
                   outdir=str(output_dir), bids_options=True, overwrite=True,
                   minmeta=True, datalad=datalad, with_prov=True)
