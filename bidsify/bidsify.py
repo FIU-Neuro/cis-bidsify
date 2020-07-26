@@ -153,8 +153,8 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     json_files = sub_dir.glob('*/*.json')
     tsv_files = sub_dir.glob('*/*.tsv')
     for f in (nii_files + json_files + tsv_files):
-        os.chmod(f, 0664)
-    
+        os.chmod(f, 0o664)
+
     # Run defacer
     anat_files = sub_dir.glob('anat/*.nii.gz')
     for anat in anat_files:
