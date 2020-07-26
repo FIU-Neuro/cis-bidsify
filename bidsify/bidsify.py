@@ -146,7 +146,7 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
                   minmeta=True, datalad=datalad)
 
     # Run defacer
-    anat_files = sub_dir.glob('/anat/*.nii.gz')
+    anat_files = sub_dir.glob('anat/*.nii.gz')
     for anat in anat_files:
         cmd = (f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca '
                f'/src/deface/face.gca {anat}')
