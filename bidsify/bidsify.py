@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Run process and anonymize dicoms."""
 import argparse
+import os
 import os.path as op
 from pathlib import Path
 from dateutil.parser import parse
@@ -125,6 +126,8 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         if session:
             work_dir = work_dir / session
     work_dir.mkdir(parents=True, exist_ok=True)
+    cwd = os.getcwd()
+    os.chdir(work_dir)
 
     if not (output_dir / '.bidsignore').is_file():
         to_ignore = ['.heudiconv/', '.tmp/', 'validator.txt']
@@ -202,6 +205,8 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         participant_df.to_csv(
             participants_file, sep='\t', na_rep='n/a',
             line_terminator='\n', index_label='participant_id')
+    # Go back where you started
+    os.chdir(cwd)
 
 
 def _main(argv=None):
