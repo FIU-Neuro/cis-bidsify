@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Run process and anonymize dicoms."""
 import argparse
+import os
 import os.path as op
 from pathlib import Path
 from dateutil.parser import parse
@@ -125,6 +126,8 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         if session:
             work_dir = work_dir / session
     work_dir.mkdir(parents=True, exist_ok=True)
+    cwd = os.getcwd()
+    os.chdir(work_dir)
 
     if not (output_dir / '.bidsignore').is_file():
         to_ignore = ['.heudiconv/', '.tmp/', 'validator.txt']
@@ -144,6 +147,13 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
                   heuristic=heuristic, converter='dcm2niix',
                   outdir=str(output_dir), bids_options=['all'], overwrite=True,
                   minmeta=True, datalad=datalad)
+
+    # CHMOD everything
+    nii_files = sub_dir.glob('*/*.nii.gz')
+    json_files = sub_dir.glob('*/*.json')
+    tsv_files = sub_dir.glob('*/*.tsv')
+    for f in (nii_files + json_files + tsv_files):
+        os.chmod(f, 0o664)
 
     # Run defacer
     anat_files = sub_dir.glob('anat/*.nii.gz')
@@ -202,6 +212,8 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         participant_df.to_csv(
             participants_file, sep='\t', na_rep='n/a',
             line_terminator='\n', index_label='participant_id')
+    # Go back where you started
+    os.chdir(cwd)
 
 
 def _main(argv=None):
