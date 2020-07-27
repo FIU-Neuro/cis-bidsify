@@ -149,9 +149,9 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
                   minmeta=True, datalad=datalad)
 
     # CHMOD everything
-    nii_files = sub_dir.glob('*/*.nii.gz')
-    json_files = sub_dir.glob('*/*.json')
-    tsv_files = sub_dir.glob('*/*.tsv')
+    nii_files = list(sub_dir.glob('*/*.nii.gz'))
+    json_files = list(sub_dir.glob('*/*.json'))
+    tsv_files = list(sub_dir.glob('*/*.tsv'))
     for f in (nii_files + json_files + tsv_files):
         os.chmod(f, 0o664)
 
