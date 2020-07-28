@@ -56,7 +56,7 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
 #------------------------
 # Install dcm2niix v1.0.20190410
 #------------------------
-RUN mkdir /src/dcm2niix \
+RUN mkdir -p /src/dcm2niix \
     && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20190410 | tar xz -C /src/dcm2niix --strip-components 1 \
     && mkdir /src/dcm2niix/build && cd /src/dcm2niix/build \
     && cmake .. && make \
