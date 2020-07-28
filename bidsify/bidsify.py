@@ -126,6 +126,7 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         if session:
             work_dir = work_dir / session
     work_dir.mkdir(parents=True, exist_ok=True)
+    os.environ['TMPDIR'] = work_dir.as_posix()
     cwd = os.getcwd()
     os.chdir(work_dir)
 

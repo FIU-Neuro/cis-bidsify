@@ -33,6 +33,7 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
         g++ \
         gcc \
         git \
+        git-annex \
         gnupg \
         locales \
         make \
@@ -55,12 +56,11 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
 #------------------------
 # Install dcm2niix v1.0.20190410
 #------------------------
-RUN mkdir dcm2niix \
-    && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20190410 | tar xz -C dcm2niix --strip-components 1 \
-    && mkdir dcm2niix/build && cd dcm2niix/build \
+RUN mkdir /src/dcm2niix \
+    && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20190410 | tar xz -C /src/dcm2niix --strip-components 1 \
+    && mkdir /src/dcm2niix/build && cd /src/dcm2niix/build \
     && cmake .. && make \
-    && make install \
-    && rm -rf /tmp/*
+    && make install
 
 #--------------------------------------------------
 # Add NeuroDebian repository
@@ -73,11 +73,6 @@ RUN curl -sSL http://neuro.debian.net/lists/stretch.us-nh.full \
     | apt-key add - \
     && (apt-key adv --refresh-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 || true) \
     && apt-get update
-
-# Install NeuroDebian packages
-RUN apt-get update -qq && apt-get install -yq --no-install-recommends git-annex-standalone \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 #Install nvm
 ENV NVM_DIR /usr/local/nvm
@@ -121,7 +116,7 @@ ENV PATH=$PATH:$DEFACE_DIR
 #---------------
 # BIDS-validator
 #---------------
-RUN npm install -g bids-validator@1.3.0
+RUN npm install -g bids-validator@1.5.4
 
 #-------------------------
 # Create conda environment
@@ -170,14 +165,12 @@ USER neuro
 RUN bash -c "source activate neuro \
     && pip install --no-cache-dir /src/bidsify/" \
     && rm -rf ~/.cache/pip/* \
-    && sync \
-    && sed -i '$isource activate neuro' $ND_ENTRYPOINT
+    && sync
 
 #----------------------
 # Set entrypoint script
 #----------------------
 ENTRYPOINT ["/neurodocker/startup.sh", "bidsify"]
-
 
 #--------------------------------------------
 # Set environmental variables for Singularity
