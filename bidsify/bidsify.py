@@ -169,11 +169,6 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     # Move "global" metadata keys to top level in jsons
     clean_metadata(output_dir, subject, session)
 
-    # Run BIDS validator
-    cmd = (f'bids-validator {output_dir} --ignoreWarnings > '
-           f'{work_dir / "validator.txt"}')
-    run(cmd, env={'TMPDIR': work_dir.name})
-
     # Remove temporary subfolders from output directory
     clean_tempdirs(output_dir, subject, session)
 
@@ -213,6 +208,12 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         participant_df.to_csv(
             participants_file, sep='\t', na_rep='n/a',
             line_terminator='\n', index_label='participant_id')
+
+    # Run BIDS validator
+    cmd = (f'bids-validator {output_dir} --ignoreWarnings > '
+           f'{work_dir / "validator.txt"}')
+    run(cmd, env={'TMPDIR': work_dir.name})
+
     # Go back where you started
     os.chdir(cwd)
 
