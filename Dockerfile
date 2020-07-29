@@ -28,12 +28,10 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
         ca-certificates \
         cmake \
         curl \
-        datalad \
         dirmngr \
         g++ \
         gcc \
         git \
-        git-annex \
         gnupg \
         locales \
         make \
@@ -53,11 +51,11 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
        fi \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
 
-#------------------------
-# Install dcm2niix v1.0.20190410
-#------------------------
+#-------------------------------
+# Install dcm2niix v1.0.20200331
+#-------------------------------
 RUN mkdir -p /src/dcm2niix \
-    && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20190410 | tar xz -C /src/dcm2niix --strip-components 1 \
+    && curl -sSL https://github.com/rordenlab/dcm2niix/tarball/v1.0.20200331 | tar xz -C /src/dcm2niix --strip-components 1 \
     && mkdir /src/dcm2niix/build && cd /src/dcm2niix/build \
     && cmake .. && make \
     && make install
@@ -74,22 +72,14 @@ RUN curl -sSL http://neuro.debian.net/lists/stretch.us-nh.full \
     && (apt-key adv --refresh-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 || true) \
     && apt-get update
 
-#Install nvm
-ENV NVM_DIR /usr/local/nvm
-ENV NODE_VERSION 10.16.3
-# install nvm
-# https://github.com/creationix/nvm#install-script
-RUN curl --silent -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.2/install.sh | bash
-
-# install node and npm
-RUN source $NVM_DIR/nvm.sh \
-    && nvm install $NODE_VERSION \
-    && nvm alias default $NODE_VERSION \
-    && nvm use default
-
-# add node and npm to path so the commands are available
-ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
-ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+#----------------------------------
+# Install Datalad (via NeuroDebian)
+#----------------------------------
+RUN apt-get update -qq && apt-get install -yq --no-install-recommends \
+        datalad \
+        git-annex-standalone \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 #--------------------
 # Download mri_deface
@@ -116,11 +106,28 @@ ENV PATH=$PATH:$DEFACE_DIR
 #---------------
 # BIDS-validator
 #---------------
+#Install nvm
+ENV NVM_DIR /usr/local/nvm
+ENV NODE_VERSION 10.16.3
+
+# https://github.com/creationix/nvm#install-script
+RUN curl --silent -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.2/install.sh | bash
+
+# install node and npm
+RUN source $NVM_DIR/nvm.sh \
+    && nvm install $NODE_VERSION \
+    && nvm alias default $NODE_VERSION \
+    && nvm use default
+
+# add node and npm to path so the commands are available
+ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
+ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
 RUN npm install -g bids-validator@1.5.4
 
-#-------------------------
-# Create conda environment
-#-------------------------
+#---------------------
+# Create neuro account
+#---------------------
 RUN useradd --no-user-group --create-home --shell /bin/bash neuro
 
 USER neuro
