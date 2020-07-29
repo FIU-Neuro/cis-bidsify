@@ -58,11 +58,23 @@ def _get_parser():
                         action='store_true',
                         default=False,
                         help='Use datalad to track changes to dataset.')
+    parser.add_argument('--username',
+                        required=False,
+                        metavar='NAME',
+                        nargs='+',
+                        default=None,
+                        help='GitHub username, for datalad.')
+    parser.add_argument('--useremail',
+                        required=False,
+                        metavar='EMAIL',
+                        default=None,
+                        help='GitHub email, for datalad.')
     return parser
 
 
 def bidsify_workflow(dicomdir, heuristic, subject, session=None,
-                     output_dir='.', work_dir=None, datalad=False):
+                     output_dir='.', work_dir=None, datalad=False,
+                     username=None, useremail=None):
     """Run the BIDSification workflow.
 
     This workflow (1) runs heudiconv to convert dicoms to nifti BIDS format,
@@ -89,6 +101,10 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         temporary directory within the output directory.
     datalad : bool, optional
         Whether to use datalad or not. Default is False.
+    username : list or str or None, optional
+        Username for Datalad. Default is None.
+    useremail : str or None, optional
+        User email for Datalad. Default is None.
 
     Warning
     -------
@@ -96,6 +112,17 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     parent of the output and data directories. This is because Singularity
     cannot mount `/home/data` if it is not in the current path.
     """
+    if isinstance(username, list):
+        username = ' '.join(username)
+    
+    if username is not None:
+        cmd = 'git config --global user.name "{}"'.format(username)
+        run(cmd)
+    
+    if useremail is not None:
+        cmd = 'git config --global user.email "{}"'.format(useremail)
+        run(cmd)
+    
     # Heuristic may be file or heudiconv builtin
     # Use existence of file extension to determine if builtin or file
     if op.splitext(heuristic)[1] and not op.isfile(heuristic):
