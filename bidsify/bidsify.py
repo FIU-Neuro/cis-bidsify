@@ -114,15 +114,15 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     """
     if isinstance(username, list):
         username = ' '.join(username)
-    
+
     if username is not None:
         cmd = 'git config --global user.name "{}"'.format(username)
         run(cmd)
-    
+
     if useremail is not None:
         cmd = 'git config --global user.email "{}"'.format(useremail)
         run(cmd)
-    
+
     # Heuristic may be file or heudiconv builtin
     # Use existence of file extension to determine if builtin or file
     if op.splitext(heuristic)[1] and not op.isfile(heuristic):
