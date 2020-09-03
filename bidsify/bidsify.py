@@ -10,71 +10,104 @@ import numpy as np
 import pandas as pd
 from heudiconv.main import workflow as heudiconv
 from bidsutils.metadata import complete_jsons, clean_metadata
+
 # Local imports
 from bidsify.utils import run, load_dicomdir_metadata, clean_tempdirs
 
 
 def _get_parser():
     """Set up argument parser for scripts."""
-    parser = argparse.ArgumentParser(description='BIDS conversion and '
-                                                 'anonymization.')
-    parser.add_argument('-d', '--dicomdir',
-                        type=Path,
-                        required=True,
-                        dest='dicomdir',
-                        help='Directory or tar file containing raw data.')
-    parser.add_argument('-f', '--heuristic',
-                        type=str,
-                        dest='heuristic',
-                        metavar='HEUR',
-                        help='Path to a heuristic file or name of a builtin '
-                             'heudiconv heuristic.')
-    parser.add_argument('-s', '--sub',
-                        required=True,
-                        dest='subject',
-                        help='The label of the subject to analyze.')
-    parser.add_argument('-ss', '--ses',
-                        required=False,
-                        dest='session',
-                        help='Session identifier',
-                        default=None)
-    parser.add_argument('-o', '--output_dir',
-                        type=Path,
-                        dest='output_dir',
-                        required=True,
-                        metavar='PATH',
-                        help="BIDS dataset directory. Must be either in "
-                             "scratch, the user's home directory, or within "
-                             "the current working directory.")
-    parser.add_argument('-w', '--work_dir',
-                        type=Path,
-                        dest='work_dir',
-                        required=False,
-                        metavar='PATH',
-                        default=None,
-                        help='Working directory (in scratch).')
-    parser.add_argument('--datalad',
-                        required=False,
-                        action='store_true',
-                        default=False,
-                        help='Use datalad to track changes to dataset.')
-    parser.add_argument('--username',
-                        required=False,
-                        metavar='NAME',
-                        nargs='+',
-                        default=None,
-                        help='GitHub username, for datalad.')
-    parser.add_argument('--useremail',
-                        required=False,
-                        metavar='EMAIL',
-                        default=None,
-                        help='GitHub email, for datalad.')
+    parser = argparse.ArgumentParser(description="BIDS conversion and anonymization.")
+    parser.add_argument(
+        "-d",
+        "--dicomdir",
+        type=Path,
+        required=True,
+        dest="dicomdir",
+        help="Directory or tar file containing raw data.",
+    )
+    parser.add_argument(
+        "-f",
+        "--heuristic",
+        type=str,
+        dest="heuristic",
+        metavar="HEUR",
+        help="Path to a heuristic file or name of a builtin heudiconv heuristic.",
+    )
+    parser.add_argument(
+        "-s",
+        "--sub",
+        required=True,
+        dest="subject",
+        help="The label of the subject to analyze.",
+    )
+    parser.add_argument(
+        "-ss",
+        "--ses",
+        required=False,
+        dest="session",
+        help="Session identifier",
+        default=None,
+    )
+    parser.add_argument(
+        "-o",
+        "--output_dir",
+        type=Path,
+        dest="output_dir",
+        required=True,
+        metavar="PATH",
+        help=(
+            "BIDS dataset directory. Must be either in "
+            "scratch, the user's home directory, or within "
+            "the current working directory."
+        ),
+    )
+    parser.add_argument(
+        "-w",
+        "--work_dir",
+        type=Path,
+        dest="work_dir",
+        required=False,
+        metavar="PATH",
+        default=None,
+        help="Working directory (in scratch).",
+    )
+    parser.add_argument(
+        "--datalad",
+        required=False,
+        action="store_true",
+        default=False,
+        help="Use datalad to track changes to dataset.",
+    )
+    parser.add_argument(
+        "--username",
+        required=False,
+        metavar="NAME",
+        nargs="+",
+        default=None,
+        help="GitHub username, for datalad.",
+    )
+    parser.add_argument(
+        "--useremail",
+        required=False,
+        metavar="EMAIL",
+        default=None,
+        help="GitHub email, for datalad.",
+    )
     return parser
 
 
-def bidsify_workflow(dicomdir, heuristic, subject, session=None,
-                     output_dir='.', work_dir=None, datalad=False,
-                     username=None, useremail=None):
+def bidsify_workflow(
+    dicomdir,
+    heuristic,
+    subject,
+    session=None,
+    output_dir=".",
+    work_dir=None,
+    datalad=False,
+    username=None,
+    useremail=None,
+):
     """Run the BIDSification workflow.
 
     This workflow (1) runs heudiconv to convert dicoms to nifti BIDS format,
@@ -113,7 +146,7 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     cannot mount `/home/data` if it is not in the current path.
     """
     if isinstance(username, list):
-        username = ' '.join(username)
+        username = " ".join(username)
 
     if username is not None:
         cmd = 'git config --global user.name "{}"'.format(username)
@@ -126,69 +159,83 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     # Heuristic may be file or heudiconv builtin
     # Use existence of file extension to determine if builtin or file
     if op.splitext(heuristic)[1] and not op.isfile(heuristic):
-        raise ValueError('Heuristic file must be an existing file.')
+        raise ValueError("Heuristic file must be an existing file.")
 
     temp_dicom_dir = Path(dicomdir.as_posix().format(subject=subject, session=session))
     dcm_name = temp_dicom_dir.as_posix()
     if temp_dicom_dir.is_file():
-        if not dcm_name.endswith('.gz') or dcm_name.endswith('.tar'):
-            raise ValueError('Heudiconv currently only accepts '
-                             '.tar and .tar.gz inputs')
-        dir_type = 'tarball'
-    elif temp_dicom_dir.is_dir() or dcm_name.endswith('.dcm'):
-        dir_type = 'folder'
+        if not dcm_name.endswith(".gz") or dcm_name.endswith(".tar"):
+            raise ValueError("Heudiconv currently only accepts .tar and .tar.gz inputs")
+        dir_type = "tarball"
+    elif temp_dicom_dir.is_dir() or dcm_name.endswith(".dcm"):
+        dir_type = "folder"
     else:
-        raise ValueError('dicomdir must be a tarball '
-                         'or directory containing dicoms')
+        raise ValueError("dicomdir must be a tarball or directory containing dicoms")
 
-    sub_dir = output_dir / f'sub-{subject}'
+    sub_dir = output_dir / f"sub-{subject}"
     if session:
-        sub_dir = output_dir / f'sub-{subject}/ses-{session}'
+        sub_dir = output_dir / f"sub-{subject}/ses-{session}"
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if work_dir is None:
-        work_dir = output_dir / '.tmp'
+        work_dir = output_dir / ".tmp"
         work_dir = work_dir / subject
         if session:
             work_dir = work_dir / session
     work_dir.mkdir(parents=True, exist_ok=True)
-    os.environ['TMPDIR'] = work_dir.as_posix()
+    os.environ["TMPDIR"] = work_dir.as_posix()
     cwd = os.getcwd()
     os.chdir(work_dir)
 
-    if not (output_dir / '.bidsignore').is_file():
-        to_ignore = ['.heudiconv/', '.tmp/', 'validator.txt']
-        with (output_dir / '.bidsignore').open('w') as fo:
-            fo.write('\n'.join(to_ignore))
+    if not (output_dir / ".bidsignore").is_file():
+        to_ignore = [".heudiconv/", ".tmp/", "validator.txt"]
+        with (output_dir / ".bidsignore").open("w") as fo:
+            fo.write("\n".join(to_ignore))
 
     # Run heudiconv
-    if dir_type == 'tarball':
-        heudiconv(dicom_dir_template=dicomdir.as_posix(),
-                  subjs=[subject], session=session,
-                  heuristic=heuristic, converter='dcm2niix',
-                  outdir=str(output_dir), bids_options=['all'], overwrite=True,
-                  minmeta=True, datalad=datalad)
+    if dir_type == "tarball":
+        heudiconv(
+            dicom_dir_template=dicomdir.as_posix(),
+            subjs=[subject],
+            session=session,
+            heuristic=heuristic,
+            converter="dcm2niix",
+            outdir=str(output_dir),
+            bids_options=["all"],
+            overwrite=True,
+            minmeta=True,
+            datalad=datalad,
+        )
     else:
-        heudiconv(files=dicomdir.as_posix(),
-                  subjs=[subject], session=session,
-                  heuristic=heuristic, converter='dcm2niix',
-                  outdir=str(output_dir), bids_options=['all'], overwrite=True,
-                  minmeta=True, datalad=datalad)
+        heudiconv(
+            files=dicomdir.as_posix(),
+            subjs=[subject],
+            session=session,
+            heuristic=heuristic,
+            converter="dcm2niix",
+            outdir=str(output_dir),
+            bids_options=["all"],
+            overwrite=True,
+            minmeta=True,
+            datalad=datalad,
+        )
 
     # CHMOD everything
-    nii_files = list(sub_dir.glob('*/*.nii.gz'))
-    json_files = list(sub_dir.glob('*/*.json'))
-    tsv_files = list(sub_dir.glob('*/*.tsv'))
-    for f in (nii_files + json_files + tsv_files):
+    nii_files = list(sub_dir.glob("*/*.nii.gz"))
+    json_files = list(sub_dir.glob("*/*.json"))
+    tsv_files = list(sub_dir.glob("*/*.tsv"))
+    for f in nii_files + json_files + tsv_files:
         os.chmod(os.path.realpath(f), 0o664)
 
     # Run defacer
-    anat_files = sub_dir.glob('anat/*.nii.gz')
+    anat_files = sub_dir.glob("anat/*.nii.gz")
     for anat in anat_files:
-        cmd = (f'mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca '
-               f'/src/deface/face.gca {anat}')
-        run(cmd, env={'TMPDIR': work_dir.name})
+        cmd = (
+            f"mri_deface {anat} /src/deface/talairach_mixed_with_skull.gca "
+            f"/src/deface/face.gca {anat}"
+        )
+        run(cmd, env={"TMPDIR": work_dir.name})
 
     # Add IntendedFor field to field maps and calculate TotalReadoutTime
     complete_jsons(output_dir, subject, session, overwrite=True)
@@ -200,31 +247,32 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
     clean_tempdirs(output_dir, subject, session)
 
     # Grab some info from the dicoms to add to the participants file
-    participants_file = output_dir / 'participants.tsv'
+    participants_file = output_dir / "participants.tsv"
     if participants_file.is_file():
-        participant_df = pd.read_table(
-            participants_file, index_col='participant_id')
+        participant_df = pd.read_table(participants_file, index_col="participant_id")
         data = load_dicomdir_metadata(temp_dicom_dir)
-        participant_id = f'sub-{subject}'
-        if data.get('PatientAge'):
-            age = data.PatientAge.replace('Y', '')
+        participant_id = f"sub-{subject}"
+        if data.get("PatientAge"):
+            age = data.PatientAge.replace("Y", "")
             try:
                 age = int(age)
             except ValueError:
                 age = np.nan
-        elif data.get('PatientBirthDate'):
+        elif data.get("PatientBirthDate"):
             age = parse(data.StudyDate) - parse(data.PatientBirthDate)
             age = np.round(age.days / 365.25, 2)
         else:
             age = np.nan
 
         additional_data = pd.DataFrame(
-            columns=['age', 'sex', 'weight'],
+            columns=["age", "sex", "weight"],
             data=[[age, data.PatientSex, data.PatientWeight]],
-            index=[participant_id])
+            index=[participant_id],
+        )
 
-        missing_cols = [col for col in additional_data.columns
-                        if col not in data.columns]
+        missing_cols = [
+            col for col in additional_data.columns if col not in data.columns
+        ]
         for mc in missing_cols:
             participant_df[mc] = np.nan
         if participant_id not in participant_df.index.values:
@@ -233,13 +281,19 @@ def bidsify_workflow(dicomdir, heuristic, subject, session=None,
         participant_df.update(additional_data, overwrite=True)
         participant_df.sort_index(inplace=True)
         participant_df.to_csv(
-            participants_file, sep='\t', na_rep='n/a',
-            line_terminator='\n', index_label='participant_id')
+            participants_file,
+            sep="\t",
+            na_rep="n/a",
+            line_terminator="\n",
+            index_label="participant_id",
+        )
 
     # Run BIDS validator
-    cmd = (f'bids-validator {output_dir} --ignoreWarnings > '
-           f'{work_dir / "validator.txt"}')
-    run(cmd, env={'TMPDIR': work_dir.name})
+    cmd = (
+        f"bids-validator {output_dir} --ignoreWarnings > "
+        f'{work_dir / "validator.txt"}'
+    )
+    run(cmd, env={"TMPDIR": work_dir.name})
 
     # Go back where you started
     os.chdir(cwd)
