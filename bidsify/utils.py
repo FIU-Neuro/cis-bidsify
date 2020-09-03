@@ -21,20 +21,26 @@ def run(command, env=None):
     if env:
         merged_env.update(env)
 
-    process = subprocess.Popen(command, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT, shell=True,
-                               env=merged_env)
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True,
+        env=merged_env,
+    )
     while True:
         line = process.stdout.readline()
-        line = line.decode('utf-8')
+        line = line.decode("utf-8")
         sys.stdout.write(line)
         sys.stdout.flush()
-        if line == '' and process.poll() is not None:
+        if line == "" and process.poll() is not None:
             break
 
     if process.returncode != 0:
-        raise Exception(f"Non zero return code: {process.returncode}\n"
-                        f"{command}\n\n{process.stdout.read()}")
+        raise Exception(
+            f"Non zero return code: {process.returncode}\n"
+            f"{command}\n\n{process.stdout.read()}"
+        )
     return process.returncode
 
 
@@ -50,19 +56,24 @@ def load_dicomdir_metadata(dicomdir):
     data : dicom header
         DICOM information from first dicom in directory.
     """
-    if dicomdir.is_file() and dicomdir.suffix in ('.gz', '.tar'):
-        open_type = 'r'
-        if dicomdir.suffix == '.gz':
-            open_type = 'r:gz'
+    if dicomdir.is_file() and dicomdir.suffix in (".gz", ".tar"):
+        open_type = "r"
+        if dicomdir.suffix == ".gz":
+            open_type = "r:gz"
         with tarfile.open(dicomdir, open_type) as tar:
-            dicoms = [mem for mem in tar.getmembers() if
-                      mem.name.endswith('.dcm')]
+            dicoms = [mem for mem in tar.getmembers() if mem.name.endswith(".dcm")]
             f_obj = tar.extractfile(dicoms[0])
             data = pydicom.read_file(f_obj)
     elif dicomdir.is_dir():
-        dcm_files = list(Path(dicomdir).glob('**/*.dcm'))
+        dcm_files = list(Path(dicomdir).glob("**/*.dcm"))
         f_obj = dcm_files[0].as_posix()
         data = pydicom.read_file(f_obj)
+    else:
+        raise ValueError(
+            "dicomdir is neither file nor directory, "
+            "dicomdir must be a tarball (.tar), "
+            "gzipped tarball (.tar.gz) or a folder structure containing dicoms (.dcm) files"
+        )
     return data
 
 
@@ -78,20 +89,20 @@ def clean_tempdirs(output_dir, sub, ses):
     sub: Subject ID
     ses: Session ID, if required
     """
-    for root in ['.heudiconv', 'tmp']:
+    for root in [".heudiconv"]:
         if ses:
-            if root == '.heudiconv':
-                print('Removing Temp Directory: ',
-                      output_dir / root / sub / f'ses-{ses}')
-                shutil.rmtree(output_dir / root / sub / f'ses-{ses}')
+            if root == ".heudiconv":
+                print(
+                    "Removing Temp Directory: ", output_dir / root / sub / f"ses-{ses}"
+                )
+                shutil.rmtree(output_dir / root / sub / f"ses-{ses}")
             else:
-                print('Removing Temp Directory: ',
-                      output_dir / root / sub / ses)
+                print("Removing Temp Directory: ", output_dir / root / sub / ses)
                 shutil.rmtree(output_dir / root / sub / ses)
         if (output_dir / root / sub).is_dir():
-            print('Removing Temp Directory: ', output_dir / root / sub)
+            print("Removing Temp Directory: ", output_dir / root / sub)
             shutil.rmtree(output_dir / root / sub)
         if (output_dir / root).is_dir():
             if not (output_dir / root).iterdir():
-                print('Removing Temp Directory: ', output_dir / root)
+                print("Removing Temp Directory: ", output_dir / root)
                 shutil.rmtree((output_dir / root))
