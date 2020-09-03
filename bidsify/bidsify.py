@@ -18,7 +18,10 @@ from bidsify.utils import run, load_dicomdir_metadata, clean_tempdirs
 def _get_parser():
     """Set up argument parser for scripts."""
     parser = argparse.ArgumentParser(
-        description="BIDS conversion and " "anonymization."
+        description=(
+            "BIDS conversion and "
+            "anonymization."
+        )
     )
     parser.add_argument(
         "-d",
@@ -34,7 +37,10 @@ def _get_parser():
         type=str,
         dest="heuristic",
         metavar="HEUR",
-        help="Path to a heuristic file or name of a builtin " "heudiconv heuristic.",
+        help=(
+            "Path to a heuristic file or name of a builtin "
+            "heudiconv heuristic."
+        )
     )
     parser.add_argument(
         "-s",
@@ -58,9 +64,11 @@ def _get_parser():
         dest="output_dir",
         required=True,
         metavar="PATH",
-        help="BIDS dataset directory. Must be either in "
-        "scratch, the user's home directory, or within "
-        "the current working directory.",
+        help=(
+            "BIDS dataset directory. Must be either in "
+            "scratch, the user's home directory, or within "
+            "the current working directory."
+        )
     )
     parser.add_argument(
         "-w",
@@ -166,13 +174,17 @@ def bidsify_workflow(
     if temp_dicom_dir.is_file():
         if not dcm_name.endswith(".gz") or dcm_name.endswith(".tar"):
             raise ValueError(
-                "Heudiconv currently only accepts " ".tar and .tar.gz inputs"
+                "Heudiconv currently only accepts "
+                ".tar and .tar.gz inputs"
             )
         dir_type = "tarball"
     elif temp_dicom_dir.is_dir() or dcm_name.endswith(".dcm"):
         dir_type = "folder"
     else:
-        raise ValueError("dicomdir must be a tarball " "or directory containing dicoms")
+        raise ValueError(
+            "dicomdir must be a tarball "
+            "or directory containing dicoms"
+        )
 
     sub_dir = output_dir / f"sub-{subject}"
     if session:
