@@ -67,7 +67,6 @@ def _get_parser():
         dest="heuristic",
         metavar="HEUR",
         help="Path to a heuristic file or name of a builtin heudiconv heuristic.",
-
     )
     parser.add_argument(
         "-s",
